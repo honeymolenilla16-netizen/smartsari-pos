@@ -56,21 +56,32 @@ class TransactionService {
         }
       }
 
-      const saleId = 'SALE-' + Utilities.formatDate(new Date(), TIME_ZONE, 'yyyyMMdd-HHmmss');
+      // Random 3-digit suffix so two same-second sales never share a sale_id
+      // (ReportService groups Sales_Items by sale_id - collisions would merge them)
+      const saleId = 'SALE-' + Utilities.formatDate(new Date(), TIME_ZONE, 'yyyyMMdd-HHmmss') + '-' + this._suffix_();
       const timestamp = new Date();
 
       // --- Build all write operations, then enqueue them FIFO ---
       const self = this;
 
-      // Stage 1: sale header + line items (bulk row arrays)
+      // Stage 1: sale header row (ONE sheet write per stage - a retry can
+      // never re-run a completed stage, so nothing gets duplicated)
       this.writeQueue.enqueue({
-        label: 'sale-records',
+        label: 'sale-header',
         run: function () {
           self.db.getSheet(SHEET_NAMES.SALES).appendRow([
             saleId, timestamp, Number(salePayload.totalAmount), Number(salePayload.amountPaid),
             Number(salePayload.changeDue), salePayload.paymentType,
             salePayload.customerName || 'Walk-in Suki', 'Completed'
           ]);
+        }
+      });
+
+      // Stage 2: line items (separate stage - if it fails and retries,
+      // the sale header above is NOT re-executed)
+      this.writeQueue.enqueue({
+        label: 'sale-items',
+        run: function () {
           const itemRows = salePayload.items.map(item => [
             saleId, item.productId, item.name, Number(item.qty),
             Number(item.unitPrice), Number(item.unitPrice) * Number(item.qty)
@@ -79,7 +90,8 @@ class TransactionService {
         }
       });
 
-      // Stage 2: deduct inventory (skip NON-INV- manual entries)
+      // Stage 3: deduct inventory (skip NON-INV- manual entries; setValue is
+      // idempotent - writing the same value twice is harmless)
       const stockUpdates = [];
       salePayload.items.forEach(item => {
         if (String(item.productId).startsWith('NON-INV-')) return;
@@ -98,7 +110,7 @@ class TransactionService {
         });
       }
 
-      // Stage 3: cash ledger inflow OR utang record
+      // Stage 4: cash ledger inflow OR utang record
       if (salePayload.paymentType === 'Cash') {
         this.writeQueue.enqueue({
           label: 'cash-ledger',
@@ -130,7 +142,9 @@ class TransactionService {
     } catch (err) {
       return { success: false, error: err.toString() };
     } finally {
-      lock.releaseLock();
+      // releaseLock() throws if waitLock() timed out and we never acquired
+      // the lock - swallow it so the real timeout error reaches the client
+      try { lock.releaseLock(); } catch (lockErr) { /* never acquired */ }
     }
   }
 
@@ -138,6 +152,9 @@ class TransactionService {
    * Execute every queued write in FIFO order. A stage that fails
    * is retried once (transient Sheets glitches), then the whole
    * sale is reported as failed with the failing stage named.
+   * Every stage performs exactly ONE atomic sheet write, so
+   * retrying a failed stage can never duplicate a stage that
+   * already completed (no duplicate sale rows).
    * Time O(stages) | each stage is a bulk Sheets call
    */
   drainWriteQueue() {

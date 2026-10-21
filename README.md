@@ -67,7 +67,7 @@ SmartSari Sari Store/
 
 7. **Run the unit tests**
    - In the app: **Tutorials → Run DSA Tests**, or in the editor: `runDsaUnitTests()`.
-   - Expected: **22/22 pass**. Record results in `tests/Unit_Tests.md`.
+   - Expected: **23/23 pass**. Record results in `tests/Unit_Tests.md`.
 
 ## Public API (unchanged global function names)
 

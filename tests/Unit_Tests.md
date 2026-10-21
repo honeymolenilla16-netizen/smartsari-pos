@@ -1,7 +1,7 @@
 # SMARTSARI — DSA Unit Test Matrix & Pass/Fail Log
 
 Test runner: `runDsaUnitTests()` (Apps Script editor) or **Tutorials → Run DSA Tests** in the app.
-Expected total: **22 server assertions** + **8 client assertions** (demo mode).
+Expected total: **23 server assertions** + **7 client assertions** (demo mode).
 
 **Instructions:** run the suite, then fill the Log column with ✅ / ❌ per row.
 Any ❌ → note the observed vs. expected value in the Notes section and fix before Week 3.
@@ -71,8 +71,8 @@ Any ❌ → note the observed vs. expected value in the Notes section and fix be
 
 | Run date | Environment | Passed / Total | Tester | Notes |
 |----------|-------------|----------------|--------|-------|
-|          | Apps Script editor |   / 22 |  |  |
-|          | Tutorials UI panel |   / 22 |  |  |
+|          | Apps Script editor |   / 23 |  |  |
+|          | Tutorials UI panel |   / 23 |  |  |
 |          | Client demo mode  |   / 7  |  |  |
 
 ## Notes (failed runs)
