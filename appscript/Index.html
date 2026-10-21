@@ -463,8 +463,51 @@
           <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
             <i data-lucide="lock" class="w-4 h-4 text-peddlr-600"></i>Paano itago ang kita sa home display?
           </h4>
-          <p class="text-[11px] text-slate-500 leading-normal">I-click ang 'Ipakita' o 'Itago' sa cash sa kahon banner. I-enter ang Admin PIN (default: 1234) para ma-unlock.</p>
+          <p class="text-[11px] text-slate-500 leading-normal">I-click ang 'Ipakita' o 'Itago' sa cash sa kahon banner para itago ang kita mula sa mga suki. Ang Admin PIN ay hinihingi isang beses lang sa pagbukas ng app.</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== APP LOCK SCREEN (startup PIN gate) ==================== -->
+  <!-- Covers the whole app until the Admin PIN is verified. Rendered above
+       every other layer (z-[90]) and blocks the UI entirely, so no store
+       data is visible before authentication. -->
+  <div id="appLockScreen" class="fixed inset-0 z-[90] hidden items-center justify-center p-4 bg-[#F6F7FB]">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-5">
+        <div class="w-14 h-14 rounded-2xl peddlr-pink-gradient flex items-center justify-center shadow-lg mx-auto mb-3">
+          <i data-lucide="store" class="w-7 h-7 text-white"></i>
+        </div>
+        <h1 class="font-display font-extrabold text-xl text-slate-800 tracking-tight">SMART<span class="text-peddlr-600">SARI</span></h1>
+        <p class="text-[10px] text-slate-400 font-semibold tracking-wide uppercase mt-0.5">Sari-Sari Store Management System</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-5 shadow-2xl border border-slate-100 space-y-4">
+        <div class="text-center space-y-1">
+          <div class="w-11 h-11 rounded-2xl bg-peddlr-50 text-peddlr-600 flex items-center justify-center mx-auto">
+            <i data-lucide="lock" class="w-5 h-5"></i>
+          </div>
+          <h2 class="font-bold text-slate-800 text-sm pt-1">Kailangan ng Admin PIN</h2>
+          <p class="text-[11px] text-slate-500 leading-relaxed">Ipasok ang PIN para ma-access ang tindahan.</p>
+        </div>
+
+        <div>
+          <label for="appLockPin" class="block text-[11px] font-bold text-slate-500 mb-1">Admin PIN</label>
+          <input id="appLockPin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();submitAppLockPin();}"
+                 class="w-full p-3 border border-slate-200 rounded-xl text-center text-lg tracking-[0.5em] font-bold outline-none focus:border-peddlr-400 focus:ring-2 focus:ring-peddlr-100">
+          <p id="appLockError" class="hidden text-[11px] font-bold text-rose-600 mt-1.5 text-center"></p>
+        </div>
+
+        <button id="appLockSubmitBtn" onclick="submitAppLockPin()"
+                class="w-full py-3 rounded-xl peddlr-pink-gradient hover:opacity-95 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5">
+          <i data-lucide="unlock" class="w-4 h-4"></i><span>I-unlock ang Tindahan</span>
+        </button>
+
+        <p class="text-[10px] text-slate-400 text-center leading-relaxed">
+          Default PIN: <span class="font-bold text-slate-500">1234</span> — palitan sa Tindahan → Store Profile.
+        </p>
       </div>
     </div>
   </div>
@@ -944,13 +987,107 @@
       startingFloat: 1000.00,
       sortMode: 'default',        // NEW: sort dropdown state
       nameIndex: [],              // NEW: name-sorted product index (Binary Search)
-      codeIndex: []               // NEW: code-sorted product index (Binary Search)
+      codeIndex: [],              // NEW: code-sorted product index (Binary Search)
+      isAdminView: false,         // true = money amounts revealed on Home
+      isUnlocked: false           // true = PIN already verified this session
     };
 
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      loadRemoteData();
+      showAppLockScreen();
     });
+
+    /* ==================================================================
+     * APP LOCK SCREEN (startup PIN gate)
+     * ------------------------------------------------------------------
+     * Security model: the app is unusable until the Admin PIN is verified,
+     * so no store data renders before authentication. `appState.isUnlocked`
+     * tracks the session; once true the user stays unlocked until the tab
+     * is closed (kept in memory only — never persisted, by design).
+     * ================================================================== */
+    function showAppLockScreen() {
+      const lock = document.getElementById('appLockScreen');
+      lock.classList.remove('hidden');
+      lock.classList.add('flex');
+      const input = document.getElementById('appLockPin');
+      input.value = '';
+      setAppLockError('');
+      if (window.lucide && lucide.createIcons) lucide.createIcons();
+      setTimeout(() => input.focus(), 80);
+    }
+
+    function hideAppLockScreen() {
+      const lock = document.getElementById('appLockScreen');
+      lock.classList.add('hidden');
+      lock.classList.remove('flex');
+    }
+
+    function setAppLockError(msg) {
+      const el = document.getElementById('appLockError');
+      if (msg) {
+        el.textContent = msg;
+        el.classList.remove('hidden');
+      } else {
+        el.textContent = '';
+        el.classList.add('hidden');
+      }
+    }
+
+    /** Verify the entered PIN, then boot the app and reveal the home screen. */
+    function submitAppLockPin() {
+      const input = document.getElementById('appLockPin');
+      const btn = document.getElementById('appLockSubmitBtn');
+      const pin = String(input.value || '').trim();
+      if (!pin) {
+        setAppLockError('Ipasok ang Admin PIN.');
+        input.focus();
+        return;
+      }
+
+      const succeed = () => {
+        appState.isUnlocked = true;
+        hideAppLockScreen();
+        // PIN already verified this session, so reveal the figures straight
+        // away. The user can still hide them with the "Itago" button, and
+        // showing them again costs no PIN.
+        unlockAdminFinancials();
+        loadRemoteData();
+      };
+
+      // Demo/offline mode: no backend, accept the documented default PIN.
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        if (pin === '1234') succeed();
+        else {
+          setAppLockError('Maling PIN! Sa demo mode, gamitin ang 1234.');
+          input.value = '';
+          input.focus();
+        }
+        return;
+      }
+
+      setAppLockError('');
+      btn.disabled = true;
+      btn.classList.add('opacity-70');
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          btn.classList.remove('opacity-70');
+          if (res && res.authorized) {
+            succeed();
+          } else {
+            setAppLockError((res && res.error) ? res.error : 'Maling PIN code! Pakisubukan ulit.');
+            input.value = '';
+            input.focus();
+          }
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          btn.classList.remove('opacity-70');
+          setAppLockError('Hindi ma-verify ang PIN. Suriin ang koneksyon at subukan ulit.');
+          if (window.console) console.error('verifyAuthCode failed:', err);
+        })
+        .verifyAuthCode(pin);
+    }
 
     /* ==================================================================
      * NAVIGATION
@@ -1358,48 +1495,20 @@
 
     /* ==================================================================
      * ADMIN PIN + FINANCIAL SUMMARY
+     * ------------------------------------------------------------------
+     * The PIN gate lives at startup (see APP LOCK SCREEN). Once verified,
+     * revealing/hiding the money amounts is a free local toggle — no PIN
+     * is asked again, which is what a cashier needs during a busy shift.
+     * `promptAdminPin` is kept as an alias so the existing markup and any
+     * older call sites keep working.
      * ================================================================== */
-    async function promptAdminPin() {
-      const pin = await uiPrompt('Ipasok ang Admin PIN Code para makita ang kita at cash summary.', {
-        title: 'Admin PIN',
-        icon: 'lock',
-        iconClass: 'bg-peddlr-50 text-peddlr-600',
-        inputLabel: 'Admin PIN',
-        inputType: 'password',
-        placeholder: '••••',
-        okText: 'I-unlock'
-      });
-      if (pin === null) return;
-
-      // Demo/offline mode: no backend, accept the documented default PIN.
-      if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        if (String(pin).trim() === '1234') unlockAdminFinancials();
-        else uiAlert('Maling PIN! Sa demo mode, gamitin ang 1234.', {
-          title: 'Maling PIN', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600'
-        });
+    function promptAdminPin() {
+      if (!appState.isUnlocked) {
+        // Session lost (e.g. a reload happened mid-flow): re-present the gate.
+        showAppLockScreen();
         return;
       }
-
-      google.script.run
-        .withSuccessHandler(res => {
-          if (res && res.authorized) {
-            unlockAdminFinancials();
-          } else if (res && res.error) {
-            uiAlert(res.error, {
-              title: 'Maling PIN', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600'
-            });
-          } else {
-            uiAlert('Maling PIN code! Pakisubukan ulit.', {
-              title: 'Maling PIN', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600'
-            });
-          }
-        })
-        .withFailureHandler(err => {
-          uiAlert('Hindi ma-verify ang PIN. Subukan ulit.\n\n' + (err && err.message ? err.message : err), {
-            title: 'May Problema', icon: 'alert-triangle', iconClass: 'bg-amber-50 text-amber-600'
-          });
-        })
-        .verifyAuthCode(pin);
+      unlockAdminFinancials();
     }
     function unlockAdminFinancials() {
       appState.isAdminView = true;
