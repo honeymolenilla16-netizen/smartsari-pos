@@ -35,11 +35,12 @@ SmartSari Sari Store/
 ## First-Time Setup
 
 1. **Create the project**
-   - Go to [script.google.com](https://script.google.com) → **New project**.
-   - Project Settings → check **“Use the V8 runtime”** (required — the code uses classes).
-   - **Bind to a spreadsheet:** Project Settings → “Show appsscript.json manifest” → add
-     `"timeZone": "Asia/Manila"` (or create the script from a Google Sheet via
-     Extensions → Apps Script).
+   - Go to your Google Sheet → **Extensions → Apps Script** (this binds the
+     project to the spreadsheet automatically — required, since the code
+     calls `SpreadsheetApp.getActiveSpreadsheet()`).
+   - **Runtime:** nothing to enable — every current Apps Script project uses
+     the **V8 runtime** automatically. (The old "Use the V8 runtime" checkbox
+     only existed in the legacy editor and has been removed.)
 
 2. **Paste the files (order doesn’t matter — one shared global scope)**
    - For each file in `appscript/`: **＋ → Script**, name it *exactly* like the file
