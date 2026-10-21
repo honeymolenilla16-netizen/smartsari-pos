@@ -1,0 +1,578 @@
+/**
+ * SMARTSARI: Sari-Sari Store Management System
+ * Google Apps Script Server Backend
+ */
+
+const SHEET_NAMES = {
+  PRODUCTS: 'Products',
+  SALES: 'Sales',
+  SALES_ITEMS: 'Sales_Items',
+  UTANG: 'Utang_Ledger',
+  UTANG_PAYMENTS: 'Utang_Payments',
+  GCASH: 'GCash_Logs',
+  EXPENSES: 'Expenses',
+  PURCHASES: 'Purchases',
+  CASH_LEDGER: 'Cash_Ledger',
+  STORE_PROFILE: 'Store_Profile',
+  DAILY_REMITTANCE: 'Daily_Remittance',
+  STORE_SETTINGS: 'Store_Settings'
+};
+
+const SCHEMAS = {
+  [SHEET_NAMES.PRODUCTS]: [
+    'product_id', 'name', 'category', 'cost_price', 'selling_price', 'stock_qty', 'reorder_level', 'image_url', 'date_updated'
+  ],
+  [SHEET_NAMES.SALES]: [
+    'sale_id', 'timestamp', 'total_amount', 'amount_paid', 'change_due', 'payment_type', 'customer_name', 'status'
+  ],
+  [SHEET_NAMES.SALES_ITEMS]: [
+    'sale_id', 'product_id', 'product_name', 'qty', 'unit_price', 'subtotal'
+  ],
+  [SHEET_NAMES.UTANG]: [
+    'utang_id', 'date_recorded', 'customer_name', 'phone_number', 'total_amount', 'balance', 'last_updated', 'status'
+  ],
+  [SHEET_NAMES.UTANG_PAYMENTS]: [
+    'payment_id', 'utang_id', 'timestamp', 'amount_paid', 'customer_name', 'note'
+  ],
+  [SHEET_NAMES.GCASH]: [
+    'txn_id', 'timestamp', 'txn_type', 'amount', 'service_fee', 'reference_no', 'customer_name', 'commission'
+  ],
+  [SHEET_NAMES.EXPENSES]: [
+    'expense_id', 'timestamp', 'category', 'amount', 'description'
+  ],
+  [SHEET_NAMES.PURCHASES]: [
+    'purchase_id', 'timestamp', 'product_id', 'product_name', 'qty', 'total_cost'
+  ],
+  [SHEET_NAMES.CASH_LEDGER]: [
+    'cash_id', 'timestamp', 'type', 'amount', 'note'
+  ],
+  [SHEET_NAMES.STORE_PROFILE]: [
+    'store_name', 'owner_name', 'phone_number', 'date_registered'
+  ],
+  [SHEET_NAMES.DAILY_REMITTANCE]: [
+    'remit_id', 'date_closed', 'expected_cash', 'actual_cash', 'discrepancy', 'closed_by', 'status'
+  ],
+  [SHEET_NAMES.STORE_SETTINGS]: [
+    'setting_key', 'setting_value', 'date_updated'
+  ]
+};
+
+function doGet(e) {
+  const template = HtmlService.createTemplateFromFile('Index');
+  return template.evaluate()
+    .setTitle('SMARTSARI: Peddlr Micro-Retail POS')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function initializeDatabase() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  for (const [sheetName, headers] of Object.entries(SCHEMAS)) {
+    let sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow(headers);
+      sheet.setFrozenRows(1);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#FCE7F3').setFontColor('#831843');
+    }
+  }
+
+  // Ensure default starting cash float and auth PIN settings exist
+  const settingsSheet = ss.getSheetByName(SHEET_NAMES.STORE_SETTINGS);
+  if (settingsSheet.getLastRow() <= 1) {
+    settingsSheet.appendRow(['starting_cash_float', '1000.00', new Date()]);
+    settingsSheet.appendRow(['auth_pin', '1234', new Date()]);
+  }
+
+  // Seed Default Products with standard categories and unique product codes
+  const prodSheet = ss.getSheetByName(SHEET_NAMES.PRODUCTS);
+  if (prodSheet.getLastRow() <= 1) {
+    const seedData = [
+      ['BIS-001', 'SkyFlakes Crackers 25g', 'Biscuits', 6.50, 8.00, 30, 10, '', new Date()],
+      ['BEV-001', 'Coca-Cola Mismo 300ml', 'Beverages', 16.00, 20.00, 20, 5, '', new Date()],
+      ['CND-001', 'Maxx Menthol Candy', 'Candies and Chocolates', 1.50, 2.00, 100, 20, '', new Date()],
+      ['CIG-001', 'Marlboro Red Single', 'Cigarettes', 8.00, 10.00, 50, 10, '', new Date()],
+      ['CND-002', 'Datu Puti Soy Sauce 100ml', 'Condiments', 12.00, 15.00, 25, 5, '', new Date()],
+      ['DET-001', 'Surf Powder Sun Fresh 80g', 'Laundry Detergent Powder', 11.00, 14.00, 30, 8, '', new Date()],
+      ['PC-001', 'Palmolive Shampoo 12ml', 'Personal Care', 6.00, 8.00, 40, 10, '', new Date()],
+      ['MLK-001', 'Bear Brand Fortified 33g', 'Powdered Milk', 14.00, 17.00, 30, 8, '', new Date()],
+      ['COF-001', 'Nescafe 3in1 Original', 'Coffee, Tea, and Creamer', 7.00, 9.00, 50, 15, '', new Date()],
+      ['RCE-001', 'Dinorado Rice (per kg)', 'Rice', 50.00, 58.00, 50, 10, '', new Date()],
+      ['SNK-001', 'Piattos Cheese 40g', 'Snacks', 14.50, 18.00, 25, 5, '', new Date()],
+      ['LIQ-001', 'San Miguel Pale Pilsen 330ml', 'Wine and Liquor', 45.00, 55.00, 12, 4, '', new Date()]
+    ];
+    seedData.forEach(row => prodSheet.appendRow(row));
+  }
+}
+
+function getStoreData() {
+  initializeDatabase();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const getSheetData = (sheetName) => {
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return [];
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return [];
+    const values = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    
+    return values.map(row => {
+      const obj = {};
+      headers.forEach((h, i) => {
+        let val = row[i];
+        if (val instanceof Date) {
+          val = val.toISOString();
+        }
+        obj[h] = val;
+      });
+      return obj;
+    });
+  };
+
+  const products = getSheetData(SHEET_NAMES.PRODUCTS);
+  const sales = getSheetData(SHEET_NAMES.SALES);
+  const salesItems = getSheetData(SHEET_NAMES.SALES_ITEMS);
+  const utang = getSheetData(SHEET_NAMES.UTANG);
+  const utangPayments = getSheetData(SHEET_NAMES.UTANG_PAYMENTS);
+  const gcash = getSheetData(SHEET_NAMES.GCASH);
+  const expenses = getSheetData(SHEET_NAMES.EXPENSES);
+  const purchases = getSheetData(SHEET_NAMES.PURCHASES);
+  const cashEntries = getSheetData(SHEET_NAMES.CASH_LEDGER);
+  const profileList = getSheetData(SHEET_NAMES.STORE_PROFILE);
+  const settingsList = getSheetData(SHEET_NAMES.STORE_SETTINGS);
+
+  const userProfile = profileList.length > 0 ? profileList[profileList.length - 1] : null;
+  const floatSetting = settingsList.find(s => s.setting_key === 'starting_cash_float');
+  const startingFloat = floatSetting ? Number(floatSetting.setting_value) || 1000.00 : 1000.00;
+
+  return {
+    success: true,
+    data: {
+      products,
+      sales,
+      salesItems,
+      utang,
+      utangPayments,
+      gcash,
+      expenses,
+      purchases,
+      cashEntries,
+      userProfile,
+      startingFloat,
+      storeName: userProfile ? userProfile.store_name : 'SMARTSARI Store'
+    }
+  };
+}
+
+function processTransaction(salePayload) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(25000);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const prodSheet = ss.getSheetByName(SHEET_NAMES.PRODUCTS);
+    const salesSheet = ss.getSheetByName(SHEET_NAMES.SALES);
+    const itemsSheet = ss.getSheetByName(SHEET_NAMES.SALES_ITEMS);
+    const cashSheet = ss.getSheetByName(SHEET_NAMES.CASH_LEDGER);
+    const utangSheet = ss.getSheetByName(SHEET_NAMES.UTANG);
+
+    const prodLastRow = prodSheet.getLastRow();
+    if (prodLastRow <= 1) throw new Error("No products found in database.");
+
+    const prodValues = prodSheet.getRange(2, 1, prodLastRow - 1, 9).getValues();
+    const productRowMap = new Map();
+    prodValues.forEach((row, idx) => {
+      productRowMap.set(String(row[0]), { rowIndex: idx + 2, data: row });
+    });
+
+    for (const item of salePayload.items) {
+      if (String(item.productId).startsWith('NON-INV-')) continue;
+      const match = productRowMap.get(String(item.productId));
+      if (!match) continue;
+      const currentStock = Number(match.data[5]);
+      if (currentStock < Number(item.qty)) {
+        throw new Error(`Kulang ang stock para sa: ${item.name}. Mayroon na lang ${currentStock} piraso.`);
+      }
+    }
+
+    const saleId = 'SALE-' + Utilities.formatDate(new Date(), "GMT+8", "yyyyMMdd-HHmmss");
+    const timestamp = new Date();
+
+    salesSheet.appendRow([
+      saleId,
+      timestamp,
+      Number(salePayload.totalAmount),
+      Number(salePayload.amountPaid),
+      Number(salePayload.changeDue),
+      salePayload.paymentType,
+      salePayload.customerName || 'Walk-in Suki',
+      'Completed'
+    ]);
+
+    salePayload.items.forEach(item => {
+      itemsSheet.appendRow([
+        saleId,
+        item.productId,
+        item.name,
+        Number(item.qty),
+        Number(item.unitPrice),
+        Number(item.unitPrice * item.qty)
+      ]);
+
+      if (!String(item.productId).startsWith('NON-INV-')) {
+        const match = productRowMap.get(String(item.productId));
+        if (match) {
+          const newStock = Number(match.data[5]) - Number(item.qty);
+          prodSheet.getRange(match.rowIndex, 6).setValue(newStock);
+          prodSheet.getRange(match.rowIndex, 9).setValue(timestamp);
+        }
+      }
+    });
+
+    if (salePayload.paymentType === 'Cash') {
+      cashSheet.appendRow([
+        'CASH-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+        timestamp,
+        'Inflow',
+        Number(salePayload.totalAmount),
+        'Sale ID: ' + saleId
+      ]);
+    } else if (salePayload.paymentType === 'Utang') {
+      utangSheet.appendRow([
+        'UTANG-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+        timestamp,
+        salePayload.customerName || 'Suki Customer',
+        salePayload.phoneNumber || '',
+        Number(salePayload.totalAmount),
+        Number(salePayload.totalAmount),
+        timestamp,
+        'Unpaid'
+      ]);
+    }
+
+    return { success: true, saleId: saleId };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function saveCashEntry(type, amount, note) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.CASH_LEDGER);
+    const timestamp = new Date();
+    const cashId = 'CASH-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss");
+    
+    sheet.appendRow([cashId, timestamp, type, Number(amount), note || 'Manual Entry']);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function recordUtangPayment(utangId, customerName, amountPaid, note) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const utangSheet = ss.getSheetByName(SHEET_NAMES.UTANG);
+    const paySheet = ss.getSheetByName(SHEET_NAMES.UTANG_PAYMENTS);
+    const cashSheet = ss.getSheetByName(SHEET_NAMES.CASH_LEDGER);
+    const timestamp = new Date();
+
+    const data = utangSheet.getDataRange().getValues();
+    let foundIndex = -1;
+    let currentBalance = 0;
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(utangId)) {
+        foundIndex = i + 1;
+        currentBalance = Number(data[i][5]);
+        break;
+      }
+    }
+
+    if (foundIndex === -1) throw new Error("Utang record not found.");
+
+    const payAmount = Number(amountPaid);
+    const newBalance = Math.max(0, currentBalance - payAmount);
+    const newStatus = newBalance === 0 ? 'Paid' : 'Partial';
+
+    utangSheet.getRange(foundIndex, 6).setValue(newBalance);
+    utangSheet.getRange(foundIndex, 7).setValue(timestamp);
+    utangSheet.getRange(foundIndex, 8).setValue(newStatus);
+
+    paySheet.appendRow([
+      'PAY-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+      utangId,
+      timestamp,
+      payAmount,
+      customerName,
+      note || 'Utang Payment'
+    ]);
+
+    cashSheet.appendRow([
+      'CASH-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+      timestamp,
+      'Inflow',
+      payAmount,
+      'Utang Payment from ' + customerName
+    ]);
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function saveExpense(category, amount, description) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const expSheet = ss.getSheetByName(SHEET_NAMES.EXPENSES);
+    const cashSheet = ss.getSheetByName(SHEET_NAMES.CASH_LEDGER);
+    const timestamp = new Date();
+
+    expSheet.appendRow([
+      'EXP-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+      timestamp,
+      category,
+      Number(amount),
+      description
+    ]);
+
+    cashSheet.appendRow([
+      'CASH-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+      timestamp,
+      'Outflow',
+      Number(amount),
+      'Expense: ' + category + ' - ' + description
+    ]);
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function recordGCashTxn(txnType, amount, fee, refNo, customerName) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const gcashSheet = ss.getSheetByName(SHEET_NAMES.GCASH);
+    const cashSheet = ss.getSheetByName(SHEET_NAMES.CASH_LEDGER);
+    const timestamp = new Date();
+
+    const amt = Number(amount);
+    const serviceFee = Number(fee) || 0;
+
+    gcashSheet.appendRow([
+      'GCASH-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+      timestamp,
+      txnType,
+      amt,
+      serviceFee,
+      refNo || '',
+      customerName || 'Walk-in',
+      serviceFee
+    ]);
+
+    if (txnType === 'Cash-In') {
+      cashSheet.appendRow([
+        'CASH-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+        timestamp,
+        'Inflow',
+        amt + serviceFee,
+        'GCash Cash-In + Fee'
+      ]);
+    } else if (txnType === 'Cash-Out') {
+      cashSheet.appendRow([
+        'CASH-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+        timestamp,
+        'Outflow',
+        amt,
+        'GCash Cash-Out Released'
+      ]);
+      if (serviceFee > 0) {
+        cashSheet.appendRow([
+          'CASH-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+          timestamp,
+          'Inflow',
+          serviceFee,
+          'GCash Service Fee'
+        ]);
+      }
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function updateStartingFloat(newFloat) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.STORE_SETTINGS);
+    const data = sheet.getDataRange().getValues();
+    let updated = false;
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === 'starting_cash_float') {
+        sheet.getRange(i + 1, 2).setValue(Number(newFloat));
+        sheet.getRange(i + 1, 3).setValue(new Date());
+        updated = true;
+        break;
+      }
+    }
+
+    if (!updated) {
+      sheet.appendRow(['starting_cash_float', Number(newFloat), new Date()]);
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function closeDailyRemittance(actualCash, closedBy) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const remitSheet = ss.getSheetByName(SHEET_NAMES.DAILY_REMITTANCE);
+    const storeData = getStoreData();
+
+    const startingFloat = storeData.data.startingFloat;
+    const cashEntries = storeData.data.cashEntries;
+
+    const netCashInflow = cashEntries.reduce((sum, entry) => {
+      const amt = Number(entry.amount) || 0;
+      return entry.type === 'Inflow' ? sum + amt : sum - amt;
+    }, 0);
+
+    const expectedCash = startingFloat + netCashInflow;
+    const actual = Number(actualCash);
+    const discrepancy = actual - expectedCash;
+    const timestamp = new Date();
+
+    remitSheet.appendRow([
+      'REMIT-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+      timestamp,
+      expectedCash,
+      actual,
+      discrepancy,
+      closedBy || 'Owner',
+      'Closed'
+    ]);
+
+    return { success: true, expectedCash, actual, discrepancy };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function updateStoreProfile(storeName, ownerName, phone, newPin) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const profSheet = ss.getSheetByName(SHEET_NAMES.STORE_PROFILE);
+    const setSheet = ss.getSheetByName(SHEET_NAMES.STORE_SETTINGS);
+    const timestamp = new Date();
+
+    profSheet.appendRow([storeName, ownerName, phone, timestamp]);
+
+    if (newPin) {
+      const data = setSheet.getDataRange().getValues();
+      let updated = false;
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][0] === 'auth_pin') {
+          setSheet.getRange(i + 1, 2).setValue(String(newPin).trim());
+          setSheet.getRange(i + 1, 3).setValue(timestamp);
+          updated = true;
+          break;
+        }
+      }
+      if (!updated) {
+        setSheet.appendRow(['auth_pin', String(newPin).trim(), timestamp]);
+      }
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function addInventoryProduct(productId, name, category, costPrice, sellingPrice, stockQty) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const prodSheet = ss.getSheetByName(SHEET_NAMES.PRODUCTS);
+    const purchSheet = ss.getSheetByName(SHEET_NAMES.PURCHASES);
+    const timestamp = new Date();
+
+    const data = prodSheet.getDataRange().getValues();
+    let existingRow = -1;
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(productId)) {
+        existingRow = i + 1;
+        break;
+      }
+    }
+
+    if (existingRow > -1) {
+      const currentStock = Number(prodSheet.getRange(existingRow, 6).getValue()) || 0;
+      prodSheet.getRange(existingRow, 4).setValue(Number(costPrice));
+      prodSheet.getRange(existingRow, 5).setValue(Number(sellingPrice));
+      prodSheet.getRange(existingRow, 6).setValue(currentStock + Number(stockQty));
+      prodSheet.getRange(existingRow, 9).setValue(timestamp);
+    } else {
+      prodSheet.appendRow([
+        productId,
+        name,
+        category,
+        Number(costPrice),
+        Number(sellingPrice),
+        Number(stockQty),
+        5,
+        '',
+        timestamp
+      ]);
+    }
+
+    purchSheet.appendRow([
+      'PURCH-' + Utilities.formatDate(timestamp, "GMT+8", "yyyyMMdd-HHmmss"),
+      timestamp,
+      productId,
+      name,
+      Number(stockQty),
+      Number(costPrice) * Number(stockQty)
+    ]);
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function verifyAuthCode(inputCode) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const settingsSheet = ss.getSheetByName(SHEET_NAMES.STORE_SETTINGS);
+    const data = settingsSheet.getDataRange().getValues();
+    
+    let storedPin = '1234'; 
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === 'auth_pin') {
+        storedPin = String(data[i][1]);
+        break;
+      }
+    }
+
+    if (String(inputCode).trim() === storedPin.trim()) {
+      return { success: true, authorized: true };
+    } else {
+      return { success: false, error: 'Maling PIN code! Pakisubukan ulit.' };
+    }
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}

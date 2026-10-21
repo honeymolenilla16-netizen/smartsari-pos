@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SMARTSARI - Peddlr Sari-Sari Store Management System</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            peddlr: {
+              50: '#FDF2F8',
+              100: '#FCE7F3',
+              200: '#FBCFE8',
+              300: '#F9A8D4',
+              400: '#F472B6',
+              500: '#EC4899',
+              600: '#DB2777',
+              700: '#BE185D',
+              800: '#9D174D',
+              900: '#831843'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .peddlr-card-shadow {
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+    }
+    .peddlr-pink-gradient {
+      background: linear-gradient(135deg, #EC4899 0%, #D81B60 100%);
+    }
+    .header-pink-gradient {
+      background: linear-gradient(135deg, #FF2D75 0%, #EE1C66 50%, #C80D55 100%);
+    }
+  </style>
+</head>
+
+<body class="bg-[#F8F9FA] text-slate-800 antialiased min-h-screen pb-20">
+
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 z-40 max-w-md mx-auto flex justify-between px-3 py-2 shadow-lg">
+    <button onclick="goToHomeScreen()" id="navHome" class="flex flex-col items-center gap-0.5 text-peddlr-600 font-bold text-[10px] w-1/5">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span>Home</span>
+    </button>
+    <button onclick="goToPOSScreen()" id="navPOS" class="flex flex-col items-center gap-0.5 text-slate-400 font-medium text-[10px] w-1/5">
+      <i data-lucide="store" class="w-5 h-5"></i>
+      <span>POS</span>
+    </button>
+    <button onclick="openUtangTabFromHome()" id="navUtang" class="flex flex-col items-center gap-0.5 text-slate-400 font-medium text-[10px] w-1/5">
+      <i data-lucide="book-open" class="w-5 h-5"></i>
+      <span>Utang</span>
+    </button>
+    <button onclick="openGCashModal()" id="navGCash" class="flex flex-col items-center gap-0.5 text-slate-400 font-medium text-[10px] w-1/5">
+      <i data-lucide="smartphone" class="w-5 h-5"></i>
+      <span>GCash</span>
+    </button>
+    <button onclick="openTindahanModal()" id="navTindahan" class="flex flex-col items-center gap-0.5 text-slate-400 font-medium text-[10px] w-1/5">
+      <i data-lucide="user" class="w-5 h-5"></i>
+      <span>Tindahan</span>
+    </button>
+  </nav>
+
+  <div id="screen-home" class="screen-view block max-w-md mx-auto min-h-screen bg-[#F6F7FB] relative overflow-hidden pb-12">
+    
+    <!-- Top Header Banner -->
+    <div class="relative header-pink-gradient text-white pt-5 pb-10 px-4 rounded-b-[2rem] shadow-sm">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center shrink-0">
+            <i data-lucide="store" class="w-6 h-6 text-white"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-display font-black text-xl tracking-tight leading-none text-white" id="displayStoreName">
+                SMART<span class="text-pink-200">SARI</span>
+              </span>
+              <span class="text-[9px] bg-white/30 px-1.5 py-0.5 rounded-full text-white font-bold tracking-wider">PH 🇵🇭</span>
+            </div>
+            <p class="text-[9px] text-pink-100 font-medium tracking-wide uppercase mt-0.5">Sari-Sari Store Management System</p>
+          </div>
+        </div>
+
+        <button onclick="loadRemoteData()" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition">
+          <i data-lucide="refresh-cw" class="w-4 h-4" id="homeSyncIcon"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Financial Card Overlay -->
+    <div class="px-4 -mt-8 relative z-20">
+      <div class="bg-white rounded-3xl p-4 border border-slate-100 peddlr-card-shadow space-y-3">
+        
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-peddlr-500 text-white flex items-center justify-center shadow-md shrink-0">
+              <i data-lucide="wallet" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">CASH SA KAHON</span>
+                <span id="tuboBadge" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">+₱0.00 Tubo</span>
+              </div>
+              
+              <div id="financialHiddenBanner" class="flex items-center gap-2 mt-0.5">
+                <span class="font-display font-black text-2xl text-slate-800 tracking-tight">₱••••••</span>
+                <button onclick="promptAdminPin()" class="text-xs text-peddlr-600 font-bold underline ml-1">Ipakita</button>
+              </div>
+
+              <div id="financialAdminContainer" class="hidden">
+                <span class="font-display font-black text-2xl text-slate-900 tracking-tight" id="statPeddlrCoins">₱1,000.00</span>
+                <button onclick="lockAdminView()" class="text-[10px] text-slate-400 font-semibold ml-2 underline">Itago</button>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="openMagFloatModal()" class="px-3.5 py-1.5 rounded-full bg-pink-50 border border-pink-200 text-peddlr-600 text-xs font-bold hover:bg-pink-100 transition">
+            Mag-float
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
+          <div class="bg-slate-50/80 rounded-2xl p-2.5 border border-slate-100">
+            <span class="text-[10px] text-slate-400 font-semibold block">Panimulang Float:</span>
+            <strong class="text-slate-800 font-bold text-sm" id="statStartingFloat">₱1,000.00</strong>
+          </div>
+          <div class="bg-pink-50/50 rounded-2xl p-2.5 border border-pink-100/60">
+            <span class="text-[10px] text-peddlr-600 font-semibold block">Net Daloy sa Kahon:</span>
+            <strong class="font-bold text-emerald-600 text-sm" id="statNetCashFlow">+₱0.00</strong>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Screen Grid Sections -->
+    <div class="p-4 space-y-5">
+      
+      <!-- DIGITAL LEDGER -->
+      <div class="space-y-2">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">DIGITAL LEDGER</span>
+        <div class="grid grid-cols-4 gap-2">
+          
+          <button onclick="openCashLedgerModal()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-pink-50 text-peddlr-600 flex items-center justify-center mb-1.5">
+              <i data-lucide="percent" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-600 leading-tight">CASH LEDGER</span>
+          </button>
+
+          <button onclick="openUtangTabFromHome()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-1.5">
+              <i data-lucide="book-open" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-600 leading-tight">CREDIT LEDGER</span>
+          </button>
+
+          <button onclick="openPaymentsModal()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-1.5">
+              <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-600 leading-tight">PAYMENTS</span>
+          </button>
+
+          <button onclick="openExpensesModal()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-1.5">
+              <i data-lucide="banknote" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-600 leading-tight">EXPENSES</span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- STORE SERVICES & TOOLS -->
+      <div class="space-y-2">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">STORE SERVICES & TOOLS</span>
+        <div class="grid grid-cols-4 gap-2">
+          
+          <button onclick="goToPOSScreen()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border-2 border-peddlr-400 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-peddlr-600 text-white flex items-center justify-center mb-1.5 shadow-xs">
+              <i data-lucide="store" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[10px] font-bold text-peddlr-600 leading-tight">POS</span>
+          </button>
+
+          <button onclick="openOrdersModal()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-pink-50 text-peddlr-500 flex items-center justify-center mb-1.5">
+              <i data-lucide="receipt" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-600 leading-tight">ORDERS</span>
+          </button>
+
+          <button onclick="openInventoryModal()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5">
+              <i data-lucide="package-check" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-600 leading-tight">RESTOCK</span>
+          </button>
+
+          <button onclick="openPurchasesModal()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-1.5">
+              <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-600 leading-tight">PURCHASES</span>
+          </button>
+
+          <button onclick="openGCashModal()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-1.5">
+              <i data-lucide="smartphone" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-600 leading-tight">E-SERVICES</span>
+          </button>
+
+          <button onclick="openReportsModal()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mb-1.5">
+              <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-600 leading-tight">REPORTS</span>
+          </button>
+
+          <button onclick="openRemitModal()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border-2 border-emerald-200 bg-emerald-50/20 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-1.5">
+              <i data-lucide="lock" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-emerald-700 leading-tight">REMIT / CLOSE</span>
+          </button>
+
+          <button onclick="goToTutorialScreen()" class="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 peddlr-card-shadow transition text-center hover:shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mb-1.5">
+              <i data-lucide="help-circle" class="w-5 h-5"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-600 leading-tight">TUTORIALS</span>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="screen-pos" class="screen-view hidden max-w-md mx-auto min-h-screen bg-[#F6F7FB] relative pb-36">
+    <header class="bg-white px-4 py-3 border-b border-slate-200/80 sticky top-0 z-30 space-y-2.5">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <button onclick="goToHomeScreen()" class="p-1 -ml-1 text-slate-700 hover:text-peddlr-600">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+          </button>
+          <h1 class="font-display font-extrabold text-base text-slate-800 tracking-tight">Point of Sale (POS)</h1>
+        </div>
+
+        <button onclick="openCartDrawer()" class="h-8 px-3 rounded-full bg-peddlr-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-peddlr-700 transition">
+          <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+          <span>Cart</span>
+          <span id="posOrdersBadge" class="bg-white text-peddlr-700 px-1.5 py-0.2 rounded-full text-[10px] font-black">0</span>
+        </button>
+      </div>
+
+      <div class="relative bg-slate-100 rounded-xl flex items-center px-3 py-1.5">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 shrink-0"></i>
+        <input type="text" id="productSearchInput" oninput="handleSearchInput(this.value)" placeholder="Maghanap ng paninda o SKU code..." class="w-full pl-2 pr-6 py-0.5 text-xs text-slate-800 bg-transparent focus:outline-none placeholder-slate-400">
+        <button id="clearSearchBtn" onclick="clearProductSearch()" class="hidden text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <label for="categoryFilterDropdown" class="text-[11px] font-bold text-slate-500 shrink-0">Kategorya:</label>
+        <select id="categoryFilterDropdown" onchange="filterByCategory(this.value)" class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none">
+          <option value="All">Lahat ng Kategorya</option>
+          <option value="Biscuits">1. Biscuits</option>
+          <option value="Beverages">2. Beverages</option>
+          <option value="Candies and Chocolates">3. Candies and Chocolates</option>
+          <option value="Cigarettes">4. Cigarettes</option>
+          <option value="Condiments">5. Condiments</option>
+          <option value="Laundry Detergent Powder">6. Laundry Detergent Powder</option>
+          <option value="Personal Care">7. Personal Care</option>
+          <option value="Powdered Milk">8. Powdered Milk</option>
+          <option value="Coffee, Tea, and Creamer">9. Coffee, Tea, and Creamer</option>
+          <option value="Rice">10. Rice</option>
+          <option value="Snacks">11. Snacks</option>
+          <option value="Wine and Liquor">12. Wine and Liquor</option>
+        </select>
+      </div>
+    </header>
+
+    <div class="p-3">
+      <div id="productGrid" class="space-y-2"></div>
+
+      <div id="emptyProductState" class="hidden text-center py-12 bg-white rounded-3xl border border-slate-200/80 p-6">
+        <div class="w-12 h-12 bg-pink-50 text-peddlr-600 rounded-full flex items-center justify-center mx-auto mb-2">
+          <i data-lucide="package-search" class="w-6 h-6"></i>
+        </div>
+        <h3 class="font-bold text-slate-700 text-xs">Walang nahanap na paninda</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Subukang suriin ang spell o mag-filter ng ibang kategorya.</p>
+        <button onclick="clearProductSearch()" class="mt-3 px-3 py-1.5 bg-peddlr-50 text-peddlr-600 text-xs font-bold rounded-xl border border-peddlr-200">I-reset ang filter</button>
+      </div>
+    </div>
+
+    <div class="fixed bottom-14 left-0 right-0 max-w-md mx-auto p-3 z-40 bg-white border-t border-slate-200 shadow-2xl">
+      <div class="flex items-center justify-between mb-2 px-1">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Amount Due:</span>
+        <span id="posTotalAmountDue" class="font-display font-extrabold text-2xl text-peddlr-700">₱0.00</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="openCartDrawer()" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+          <span>Cart Summary</span>
+        </button>
+        <button onclick="openCartDrawer()" class="py-2.5 px-3 rounded-xl peddlr-pink-gradient hover:opacity-95 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition">
+          <i data-lucide="credit-card" class="w-4 h-4"></i>
+          <span>Payment</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-utang" class="screen-view hidden max-w-md mx-auto min-h-screen bg-[#F6F7FB] pb-24">
+    <header class="bg-white px-4 py-3 border-b border-slate-200/80 sticky top-0 z-30">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <button onclick="goToHomeScreen()" class="p-1 -ml-1 text-slate-700 hover:text-peddlr-600">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+          </button>
+          <h1 class="font-display font-extrabold text-base text-slate-800 tracking-tight">Credit Ledger (Utang)</h1>
+        </div>
+        <button onclick="addNewCustomerUtang()" class="px-2.5 py-1 bg-rose-600 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-xs">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>Ilista</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="p-4 space-y-3">
+      <div id="utangListContainer" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <div id="screen-tutorial" class="screen-view hidden max-w-md mx-auto min-h-screen bg-[#F6F7FB] pb-24">
+    <header class="bg-white px-4 py-3 border-b border-slate-200/80 sticky top-0 z-30 space-y-2">
+      <div class="flex items-center gap-2">
+        <button onclick="goToHomeScreen()" class="p-1 -ml-1 text-slate-700 hover:text-peddlr-600">
+          <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </button>
+        <h1 class="font-display font-extrabold text-base text-slate-800 tracking-tight">Tutorials & AI Assistant</h1>
+      </div>
+
+      <div class="relative bg-slate-100 rounded-xl flex items-center px-3 py-1.5">
+        <i data-lucide="sparkles" class="w-4 h-4 text-peddlr-600 shrink-0"></i>
+        <input type="text" id="aiSearchInput" oninput="filterTutorials(this.value)" placeholder="Magtanong sa AI assistant..." class="w-full pl-2 pr-2 py-0.5 text-xs text-slate-800 bg-transparent focus:outline-none placeholder-slate-400">
+      </div>
+    </header>
+
+    <div class="p-4 space-y-3" id="tutorialListContainer">
+      <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl p-4 shadow-md space-y-1">
+        <div class="flex items-center gap-1.5 font-bold text-xs">
+          <i data-lucide="bot" class="w-4 h-4"></i>
+          <span>SMARTSARI Smart Assistant</span>
+        </div>
+        <p class="text-[11px] opacity-90 leading-relaxed">Mabilis na gabay at tulong para sa iyong sari-sari store POS application.</p>
+      </div>
+
+      <div class="space-y-2 pt-2">
+        <div class="bg-white rounded-2xl p-3 border border-slate-200/80 peddlr-card-shadow space-y-1 tutorial-item">
+          <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+            <i data-lucide="help-circle" class="w-4 h-4 text-peddlr-600"></i>
+            Paano mag-record ng benta sa POS?
+          </h4>
+          <p class="text-[11px] text-slate-500 leading-normal">Pumunta sa POS tab, gamitin ang (-) at (+) para pumili ng paninda, at i-click ang checkout button para makumpleto ang benta.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-3 border border-slate-200/80 peddlr-card-shadow space-y-1 tutorial-item">
+          <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+            <i data-lucide="lock" class="w-4 h-4 text-peddlr-600"></i>
+            Paano itago ang kita sa home display?
+          </h4>
+          <p class="text-[11px] text-slate-500 leading-normal">I-click ang 'Ipakita' o 'Itago' sa cash sa kahon banner. I-enter ang Admin PIN (default: 1234) para ma-unlock.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cashLedgerModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeModal('cashLedgerModal')" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-sm rounded-3xl p-4 shadow-2xl space-y-3 max-h-[85vh] flex flex-col z-10">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="percent" class="w-5 h-5 text-peddlr-600"></i>
+          <h3 class="font-bold text-slate-800 text-sm">Cash Ledger</h3>
+        </div>
+        <button onclick="closeModal('cashLedgerModal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+        <span class="text-xs font-bold text-slate-700 block">Magdagdag ng Cash Entry:</span>
+        <div class="grid grid-cols-2 gap-2">
+          <select id="cashEntryType" class="p-2 border border-slate-200 rounded-xl text-xs bg-white font-semibold">
+            <option value="Inflow">Cash Inflow (+)</option>
+            <option value="Outflow">Cash Outflow (-)</option>
+          </select>
+          <input type="number" id="cashEntryAmount" placeholder="Halaga (₱)" class="p-2 border border-slate-200 rounded-xl text-xs outline-none">
+        </div>
+        <input type="text" id="cashEntryNote" placeholder="Paliwanag / Description" class="w-full p-2 border border-slate-200 rounded-xl text-xs outline-none">
+        <button onclick="saveCashLedgerEntry()" class="w-full py-2 bg-peddlr-600 text-white font-bold text-xs rounded-xl hover:bg-peddlr-700">I-save sa Ledger</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-2 no-scrollbar" id="cashLedgerLogsContainer"></div>
+    </div>
+  </div>
+
+  <div id="expensesModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeModal('expensesModal')" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-sm rounded-3xl p-4 shadow-2xl space-y-3 z-10">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="banknote" class="w-5 h-5 text-amber-600"></i>
+          <h3 class="font-bold text-slate-800 text-sm">Expenses Tracker</h3>
+        </div>
+        <button onclick="closeModal('expensesModal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-2">
+        <select id="expenseCategory" class="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none">
+          <option value="Kuryente">Kuryente (Electricity)</option>
+          <option value="Tubig">Tubig (Water)</option>
+          <option value="Upa">Upa sa Puwesto (Rent)</option>
+          <option value="Plastik">Plastik & Supplies</option>
+          <option value="Iba pa">Iba pa (Others)</option>
+        </select>
+        <input type="number" id="expenseAmount" placeholder="Halaga (₱)" class="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none">
+        <input type="text" id="expenseDesc" placeholder="Keterangan / Notes" class="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none">
+        <button onclick="submitExpense()" class="w-full py-2.5 bg-amber-600 text-white font-bold text-xs rounded-xl hover:bg-amber-700">Record Expense</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gcashModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeModal('gcashModal')" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-sm rounded-3xl p-4 shadow-2xl space-y-3 z-10">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="smartphone" class="w-5 h-5 text-blue-600"></i>
+          <h3 class="font-bold text-slate-800 text-sm">GCash & E-Services</h3>
+        </div>
+        <button onclick="closeModal('gcashModal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <select id="gcashType" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+          <option value="Cash-In">GCash Cash-In</option>
+          <option value="Cash-Out">GCash Cash-Out</option>
+          <option value="Buy-Load">Buy Load</option>
+        </select>
+        <input type="number" id="gcashAmount" placeholder="Halaga (₱)" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <input type="number" id="gcashFee" placeholder="Convenience / Service Fee (₱)" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <input type="text" id="gcashRef" placeholder="Reference Number" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <input type="text" id="gcashCustomer" placeholder="Customer Name / Mobile No." class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <button onclick="submitGCashTxn()" class="w-full py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700">Record Transaction</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="floatModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeModal('floatModal')" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-sm rounded-3xl p-4 shadow-2xl space-y-3 z-10">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="wallet" class="w-5 h-5 text-peddlr-600"></i>
+          <h3 class="font-bold text-slate-800 text-sm">Mag-float (Panimulang Pondo)</h3>
+        </div>
+        <button onclick="closeModal('floatModal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <label class="block text-slate-500 font-semibold">Ipasok ang bagong Panimulang Float (₱):</label>
+        <input type="number" id="inputFloatValue" placeholder="1000.00" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+        <button onclick="submitNewFloat()" class="w-full py-2.5 bg-peddlr-600 text-white font-bold rounded-xl hover:bg-peddlr-700">I-save ang Float</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="remitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeModal('remitModal')" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-sm rounded-3xl p-4 shadow-2xl space-y-3 z-10">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="lock" class="w-5 h-5 text-emerald-600"></i>
+          <h3 class="font-bold text-slate-800 text-sm">Daily Remittance & Store Closing</h3>
+        </div>
+        <button onclick="closeModal('remitModal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <label class="block text-slate-500 font-semibold">Aktwal na Pera sa Kahon (Actual Cash Count):</label>
+        <input type="number" id="remitActualCash" placeholder="0.00" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+        <input type="text" id="remitClosedBy" placeholder="Nag-sara ng Tindahan (Owner/Cashier)" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <button onclick="submitDailyRemit()" class="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700">Mag-Remit at I-close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tindahanModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeModal('tindahanModal')" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-sm rounded-3xl p-4 shadow-2xl space-y-3 z-10">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="user" class="w-5 h-5 text-slate-700"></i>
+          <h3 class="font-bold text-slate-800 text-sm">Tindahan & Owner Profile</h3>
+        </div>
+        <button onclick="closeModal('tindahanModal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <input type="text" id="profileStoreName" placeholder="Pangalan ng Store" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <input type="text" id="profileOwnerName" placeholder="Pangalan ng May-ari" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <input type="text" id="profilePhone" placeholder="Numero ng Telepono" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <input type="password" id="profileNewPin" placeholder="Bagong Security PIN (e.g. 1234)" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <button onclick="submitStoreProfile()" class="w-full py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900">I-save ang Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="inventoryModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeInventoryModal()" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-sm rounded-3xl p-4 shadow-2xl space-y-3 max-h-[85vh] flex flex-col z-10">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="boxes" class="w-5 h-5 text-purple-600"></i>
+          <h3 class="font-bold text-slate-800 text-sm">Inventory & Product Codes</h3>
+        </div>
+        <button onclick="closeInventoryModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="p-3 bg-purple-50 rounded-2xl border border-purple-100 space-y-2 text-xs">
+        <span class="font-bold text-purple-900 block">Magdagdag / Restock ng Paninda:</span>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" id="invCode" placeholder="Code (e.g. SNK-002)" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
+          <input type="text" id="invName" placeholder="Pangalan ng Product" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
+        </div>
+        <div class="grid grid-cols-3 gap-1.5">
+          <input type="number" id="invCost" placeholder="Cost (₱)" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
+          <input type="number" id="invPrice" placeholder="Selling (₱)" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
+          <input type="number" id="invQty" placeholder="Dami (Qty)" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
+        </div>
+        <button onclick="submitNewProductRestock()" class="w-full py-2 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700">I-add sa Inventory</button>
+      </div>
+
+      <div class="relative">
+        <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400"></i>
+        <input type="text" id="inventorySearchInput" oninput="renderInventoryList(this.value)" placeholder="Search by Product Code or Name..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none">
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-2 no-scrollbar" id="inventoryListContainer"></div>
+    </div>
+  </div>
+
+  <div id="reportsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeReportsModal()" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto no-scrollbar z-10">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="bar-chart-3" class="w-5 h-5 text-teal-600"></i>
+          <h3 class="font-bold text-slate-800 text-sm">Ulat ng Kita at Benta (Reports)</h3>
+        </div>
+        <button onclick="closeReportsModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-2 text-xs">
+        <span class="block font-bold text-slate-700">Pumili ng Sakop na Petsa:</span>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-0.5">Start Date:</label>
+            <input type="date" id="reportStartDate" class="w-full py-1.5 px-2 bg-white border border-slate-200 rounded-xl text-xs outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-0.5">End Date:</label>
+            <input type="date" id="reportEndDate" class="w-full py-1.5 px-2 bg-white border border-slate-200 rounded-xl text-xs outline-none">
+          </div>
+        </div>
+
+        <button onclick="generateDateRangeReport()" class="w-full py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition shadow-xs flex items-center justify-center gap-1.5">
+          <i data-lucide="play" class="w-3.5 h-3.5"></i>
+          <span>Generate Report</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div class="p-3 bg-teal-50 rounded-2xl border border-teal-100">
+          <span class="text-slate-500 block text-[10px] font-bold uppercase">Kabuuang Benta</span>
+          <span class="font-display font-bold text-base text-teal-800" id="repTotalSales">₱0.00</span>
+        </div>
+        <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
+          <span class="text-slate-500 block text-[10px] font-bold uppercase">Estimated Tubo</span>
+          <span class="font-display font-bold text-base text-emerald-800" id="repGrossProfit">₱0.00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cartDrawerModal" class="fixed inset-0 z-50 hidden">
+    <div onclick="closeCartDrawer()" class="absolute inset-0 bg-slate-900/50 backdrop-blur-xs"></div>
+    <div class="absolute bottom-0 left-0 right-0 max-w-md mx-auto max-h-[85vh] bg-white rounded-t-3xl shadow-2xl flex flex-col overflow-hidden z-10">
+      <div class="px-4 pt-3 pb-2 flex items-center justify-between border-b border-slate-100">
+        <div class="flex items-center gap-2 mt-1">
+          <i data-lucide="shopping-bag" class="w-5 h-5 text-peddlr-600"></i>
+          <h3 class="font-display font-bold text-slate-800 text-sm">Cart Summary</h3>
+        </div>
+        <button onclick="closeCartDrawer()" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar"></div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-100 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-500">Kabuuang Halaga:</span>
+          <span id="cartDrawerTotal" class="font-display font-extrabold text-xl text-slate-900">₱0.00</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="initiateCheckout('Cash')" class="py-3 peddlr-pink-gradient hover:opacity-95 text-white rounded-2xl text-xs font-bold shadow-md transition">
+            Cash Checkout
+          </button>
+          <button onclick="initiateCheckout('Utang')" class="py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-bold shadow-md transition">
+            Ilista sa Utang
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let appState = {
+      products: [],
+      sales: [],
+      utang: [],
+      cashEntries: [],
+      expenses: [],
+      cart: {},
+      selectedCategory: 'All',
+      searchQuery: '',
+      isAdminView: false,
+      startingFloat: 1000.00
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadRemoteData();
+    });
+
+    function goToHomeScreen() {
+      showScreen('screen-home');
+      setActiveNav('navHome');
+    }
+
+    function goToPOSScreen() {
+      showScreen('screen-pos');
+      setActiveNav('navPOS');
+      renderPOSProducts();
+    }
+
+    function goToTutorialScreen() {
+      showScreen('screen-tutorial');
+    }
+
+    function openUtangTabFromHome() {
+      showScreen('screen-utang');
+      setActiveNav('navUtang');
+      renderUtangList();
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function openCashLedgerModal() {
+      document.getElementById('cashLedgerModal').classList.remove('hidden');
+      renderCashLedgerLogs();
+    }
+
+    function openPaymentsModal() {
+      openCashLedgerModal();
+    }
+
+    function openExpensesModal() {
+      document.getElementById('expensesModal').classList.remove('hidden');
+    }
+
+    function openGCashModal() {
+      document.getElementById('gcashModal').classList.remove('hidden');
+    }
+
+    function openMagFloatModal() {
+      document.getElementById('floatModal').classList.remove('hidden');
+      document.getElementById('inputFloatValue').value = appState.startingFloat;
+    }
+
+    function openRemitModal() {
+      document.getElementById('remitModal').classList.remove('hidden');
+    }
+
+    function openTindahanModal() {
+      document.getElementById('tindahanModal').classList.remove('hidden');
+    }
+
+    function openOrdersModal() {
+      alert('Orders History Module: Active ' + appState.sales.length + ' transactions.');
+    }
+
+    function openPurchasesModal() {
+      openInventoryModal();
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen-view').forEach(s => s.classList.add('hidden'));
+      document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    function setActiveNav(navId) {
+      ['navHome', 'navPOS', 'navUtang', 'navGCash', 'navTindahan'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.className = id === navId 
+            ? 'flex flex-col items-center gap-0.5 text-peddlr-600 font-bold text-[10px] w-1/5' 
+            : 'flex flex-col items-center gap-0.5 text-slate-400 font-medium text-[10px] w-1/5';
+        }
+      });
+    }
+
+    function loadRemoteData() {
+      const icon = document.getElementById('homeSyncIcon');
+      if (icon) icon.classList.add('animate-spin');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(onDataLoaded)
+          .withFailureHandler(err => {
+            if (icon) icon.classList.remove('animate-spin');
+            console.error('Error loading remote data:', err);
+          })
+          .getStoreData();
+      } else {
+        setTimeout(() => {
+          onDataLoaded({
+            success: true,
+            data: {
+              products: [
+                { product_id: 'BIS-001', name: 'SkyFlakes Crackers 25g', category: 'Biscuits', selling_price: 8.00, stock_qty: 30 },
+                { product_id: 'BEV-001', name: 'Coca-Cola Mismo 300ml', category: 'Beverages', selling_price: 20.00, stock_qty: 15 },
+                { product_id: 'CND-001', name: 'Maxx Menthol Candy', category: 'Candies and Chocolates', selling_price: 2.00, stock_qty: 50 },
+                { product_id: 'SNK-001', name: 'Piattos Cheese 40g', category: 'Snacks', selling_price: 18.00, stock_qty: 25 },
+                { product_id: 'COF-001', name: 'Nescafe 3in1 Original', category: 'Coffee, Tea, and Creamer', selling_price: 9.00, stock_qty: 40 }
+              ],
+              sales: [],
+              utang: [{ utang_id: 'UTANG-01', customer_name: 'Aling Rosa (Suki)', balance: 125.00, status: 'Unpaid' }],
+              cashEntries: [],
+              startingFloat: 1000.00,
+              storeName: 'Aling Nena Sari-Sari Store'
+            }
+          });
+        }, 300);
+      }
+    }
+
+    function onDataLoaded(res) {
+      const icon = document.getElementById('homeSyncIcon');
+      if (icon) icon.classList.remove('animate-spin');
+
+      if (res && res.success) {
+        appState.products = res.data.products || [];
+        appState.sales = res.data.sales || [];
+        appState.utang = res.data.utang || [];
+        appState.cashEntries = res.data.cashEntries || [];
+        appState.expenses = res.data.expenses || [];
+        appState.startingFloat = res.data.startingFloat || 1000.00;
+        
+        if (res.data.storeName) {
+          document.getElementById('displayStoreName').innerHTML = res.data.storeName;
+        }
+
+        renderPOSProducts();
+        renderUtangList();
+        updateFinancialSummary();
+      }
+    }
+
+    function promptAdminPin() {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        const pin = prompt('Ipasok ang Admin PIN Code:');
+        if (!pin) return;
+        google.script.run
+          .withSuccessHandler(res => {
+            if (res && res.authorized) {
+              unlockAdminFinancials();
+            } else {
+              alert(res.error || 'Maling PIN!');
+            }
+          })
+          .verifyAuthCode(pin);
+      } else {
+        unlockAdminFinancials();
+      }
+    }
+
+    function unlockAdminFinancials() {
+      appState.isAdminView = true;
+      document.getElementById('financialHiddenBanner').classList.add('hidden');
+      document.getElementById('financialAdminContainer').classList.remove('hidden');
+    }
+
+    function lockAdminView() {
+      appState.isAdminView = false;
+      document.getElementById('financialHiddenBanner').classList.remove('hidden');
+      document.getElementById('financialAdminContainer').classList.add('hidden');
+    }
+
+    function updateFinancialSummary() {
+      const totalSales = appState.sales.reduce((acc, s) => acc + (Number(s.total_amount) || 0), 0);
+      const cashInflows = appState.cashEntries.reduce((acc, c) => acc + (c.type === 'Inflow' ? Number(c.amount || 0) : -Number(c.amount || 0)), 0);
+      const netCash = appState.startingFloat + totalSales + cashInflows;
+      
+      document.getElementById('statPeddlrCoins').innerText = '₱' + netCash.toFixed(2);
+      document.getElementById('statStartingFloat').innerText = '₱' + Number(appState.startingFloat).toFixed(2);
+      document.getElementById('statNetCashFlow').innerText = (totalSales + cashInflows >= 0 ? '+' : '') + '₱' + (totalSales + cashInflows).toFixed(2);
+      document.getElementById('tuboBadge').innerText = '+₱' + (totalSales * 0.20).toFixed(2) + ' Tubo';
+    }
+
+    function saveCashLedgerEntry() {
+      const type = document.getElementById('cashEntryType').value;
+      const amount = Number(document.getElementById('cashEntryAmount').value);
+      const note = document.getElementById('cashEntryNote').value;
+
+      if (!amount || amount <= 0) return alert('Maglagay ng valid na halaga!');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => {
+          document.getElementById('cashEntryAmount').value = '';
+          document.getElementById('cashEntryNote').value = '';
+          loadRemoteData();
+          closeModal('cashLedgerModal');
+        }).saveCashEntry(type, amount, note);
+      } else {
+        appState.cashEntries.push({ type, amount, note });
+        updateFinancialSummary();
+        closeModal('cashLedgerModal');
+      }
+    }
+
+    function renderCashLedgerLogs() {
+      const container = document.getElementById('cashLedgerLogsContainer');
+      if (appState.cashEntries.length === 0) {
+        container.innerHTML = `<div class="text-center py-4 text-slate-400 text-xs">Walang cash entries.</div>`;
+        return;
+      }
+
+      container.innerHTML = appState.cashEntries.map(c => `
+        <div class="p-2.5 bg-slate-50 rounded-xl flex items-center justify-between text-xs border border-slate-100">
+          <div>
+            <span class="font-bold text-slate-800 block">${c.note || c.type}</span>
+            <span class="text-[10px] text-slate-400">${c.type}</span>
+          </div>
+          <span class="font-extrabold ${c.type === 'Inflow' ? 'text-emerald-600' : 'text-rose-600'}">
+            ${c.type === 'Inflow' ? '+' : '-'}₱${Number(c.amount).toFixed(2)}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function renderUtangList() {
+      const container = document.getElementById('utangListContainer');
+      if (!container) return;
+
+      if (appState.utang.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">Walang nakalistang utang.</div>`;
+        return;
+      }
+
+      container.innerHTML = appState.utang.map(u => `
+        <div class="p-3 bg-white rounded-2xl border border-slate-200/80 peddlr-card-shadow flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-slate-800 text-xs">${u.customer_name}</h4>
+            <span class="text-[10px] text-slate-400 block">${u.phone_number || 'Walang Phone'}</span>
+          </div>
+          <div class="text-right">
+            <span class="font-extrabold text-rose-600 text-xs block">₱${Number(u.balance).toFixed(2)}</span>
+            ${Number(u.balance) > 0 ? `<button onclick="payUtangPrompt('${u.utang_id}', '${u.customer_name}')" class="text-[10px] font-bold text-peddlr-600 underline">Magbayad</button>` : `<span class="text-[10px] font-bold text-emerald-600">Bayad na</span>`}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function payUtangPrompt(utangId, name) {
+      const amt = prompt(`Magkano ang ibabayad ni ${name}?`);
+      if (!amt || isNaN(amt) || Number(amt) <= 0) return;
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => {
+          alert('Nai-record ang bayad sa utang!');
+          loadRemoteData();
+        }).recordUtangPayment(utangId, name, Number(amt), 'Partial Payment');
+      } else {
+        const match = appState.utang.find(u => u.utang_id === utangId);
+        if (match) {
+          match.balance = Math.max(0, match.balance - Number(amt));
+          if (match.balance === 0) match.status = 'Paid';
+        }
+        renderUtangList();
+      }
+    }
+
+    function submitExpense() {
+      const cat = document.getElementById('expenseCategory').value;
+      const amt = Number(document.getElementById('expenseAmount').value);
+      const desc = document.getElementById('expenseDesc').value;
+
+      if (!amt || amt <= 0) return alert('Maglagay ng halaga!');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => {
+          alert('Expense recorded!');
+          closeModal('expensesModal');
+          loadRemoteData();
+        }).saveExpense(cat, amt, desc);
+      } else {
+        alert('Expense recorded!');
+        closeModal('expensesModal');
+      }
+    }
+
+    function submitGCashTxn() {
+      const type = document.getElementById('gcashType').value;
+      const amt = Number(document.getElementById('gcashAmount').value);
+      const fee = Number(document.getElementById('gcashFee').value) || 0;
+      const ref = document.getElementById('gcashRef').value;
+      const cust = document.getElementById('gcashCustomer').value;
+
+      if (!amt || amt <= 0) return alert('Maglagay ng valid na halaga!');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => {
+          alert('GCash transaction saved!');
+          closeModal('gcashModal');
+          loadRemoteData();
+        }).recordGCashTxn(type, amt, fee, ref, cust);
+      } else {
+        alert('GCash transaction saved!');
+        closeModal('gcashModal');
+      }
+    }
+
+    function submitNewFloat() {
+      const val = Number(document.getElementById('inputFloatValue').value);
+      if (isNaN(val) || val < 0) return alert('Maglagay ng valid na float!');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => {
+          alert('Float updated!');
+          closeModal('floatModal');
+          loadRemoteData();
+        }).updateStartingFloat(val);
+      } else {
+        appState.startingFloat = val;
+        updateFinancialSummary();
+        closeModal('floatModal');
+      }
+    }
+
+    function submitDailyRemit() {
+      const actual = Number(document.getElementById('remitActualCash').value);
+      const by = document.getElementById('remitClosedBy').value;
+
+      if (isNaN(actual)) return alert('Mag-enter ng cash count!');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(res => {
+          alert(`Remittance Saved!\nExpected: ₱${res.expectedCash.toFixed(2)}\nActual: ₱${res.actual.toFixed(2)}\nDiscrepancy: ₱${res.discrepancy.toFixed(2)}`);
+          closeModal('remitModal');
+        }).closeDailyRemittance(actual, by);
+      } else {
+        alert('Remittance Saved!');
+        closeModal('remitModal');
+      }
+    }
+
+    function submitStoreProfile() {
+      const name = document.getElementById('profileStoreName').value;
+      const owner = document.getElementById('profileOwnerName').value;
+      const phone = document.getElementById('profilePhone').value;
+      const pin = document.getElementById('profileNewPin').value;
+
+      if (!name) return alert('Ipasok ang pangalan ng store!');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => {
+          alert('Store Settings Saved!');
+          closeModal('tindahanModal');
+          loadRemoteData();
+        }).updateStoreProfile(name, owner, phone, pin);
+      } else {
+        document.getElementById('displayStoreName').innerText = name;
+        alert('Store Settings Saved!');
+        closeModal('tindahanModal');
+      }
+    }
+
+    function submitNewProductRestock() {
+      const code = document.getElementById('invCode').value;
+      const name = document.getElementById('invName').value;
+      const cost = Number(document.getElementById('invCost').value);
+      const price = Number(document.getElementById('invPrice').value);
+      const qty = Number(document.getElementById('invQty').value);
+
+      if (!code || !name || price <= 0 || qty <= 0) return alert('Kumpletuhin ang product info!');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => {
+          alert('Product Added / Restocked!');
+          loadRemoteData();
+        }).addInventoryProduct(code, name, 'General', cost, price, qty);
+      } else {
+        appState.products.push({ product_id: code, name: name, selling_price: price, stock_qty: qty });
+        renderPOSProducts();
+        renderInventoryList();
+        alert('Product Added!');
+      }
+    }
+
+    function filterByCategory(cat) {
+      appState.selectedCategory = cat;
+      renderPOSProducts();
+    }
+
+    function handleSearchInput(query) {
+      appState.searchQuery = query.toLowerCase();
+      document.getElementById('clearSearchBtn').classList.toggle('hidden', !query);
+      renderPOSProducts();
+    }
+
+    function clearProductSearch() {
+      appState.searchQuery = '';
+      document.getElementById('productSearchInput').value = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      renderPOSProducts();
+    }
+
+    function filterTutorials(q) {
+      const term = q.toLowerCase();
+      document.querySelectorAll('.tutorial-item').forEach(el => {
+        el.style.display = el.innerText.toLowerCase().includes(term) ? 'block' : 'none';
+      });
+    }
+
+    function renderPOSProducts() {
+      const grid = document.getElementById('productGrid');
+      const emptyState = document.getElementById('emptyProductState');
+      if (!grid) return;
+
+      let filtered = appState.products.filter(p => {
+        const matchesCategory = (appState.selectedCategory === 'All' || p.category === appState.selectedCategory);
+        const matchesSearch = !appState.searchQuery || 
+          p.name.toLowerCase().includes(appState.searchQuery) || 
+          String(p.product_id).toLowerCase().includes(appState.searchQuery);
+        return matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      grid.innerHTML = filtered.map(p => {
+        const qtyInCart = appState.cart[p.product_id] ? appState.cart[p.product_id].qty : 0;
+        return `
+          <div class="bg-white rounded-2xl p-3 border border-slate-200/80 peddlr-card-shadow flex items-center justify-between">
+            <div class="flex-1 min-w-0 pr-2">
+              <span class="text-[9px] font-bold text-slate-400 font-mono block">${p.product_id}</span>
+              <h4 class="font-bold text-slate-800 text-xs truncate">${p.name}</h4>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="font-extrabold text-peddlr-700 text-xs">₱${Number(p.selling_price).toFixed(2)}</span>
+                <span class="text-[10px] text-slate-400">Stock: ${p.stock_qty}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl shrink-0">
+              <button onclick="updateCartQty('${p.product_id}', -1)" class="w-7 h-7 rounded-lg bg-white text-slate-700 flex items-center justify-center font-extrabold text-sm shadow-xs hover:bg-slate-200 active:scale-95 transition">
+                −
+              </button>
+              <span class="w-6 text-center font-bold text-xs text-slate-800">${qtyInCart}</span>
+              <button onclick="updateCartQty('${p.product_id}', 1)" class="w-7 h-7 rounded-lg peddlr-pink-gradient text-white flex items-center justify-center font-extrabold text-sm shadow-xs hover:opacity-90 active:scale-95 transition">
+                +
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      updatePOSFooterTotal();
+    }
+
+    function updateCartQty(productId, change) {
+      const prod = appState.products.find(p => p.product_id === productId);
+      if (!prod) return;
+
+      if (!appState.cart[productId]) {
+        appState.cart[productId] = {
+          productId: prod.product_id,
+          name: prod.name,
+          unitPrice: Number(prod.selling_price),
+          qty: 0
+        };
+      }
+
+      const newQty = appState.cart[productId].qty + change;
+      if (newQty <= 0) {
+        delete appState.cart[productId];
+      } else {
+        if (newQty > prod.stock_qty) {
+          alert(`Kulang ang stock para sa ${prod.name}. Mayroon na lang ${prod.stock_qty} piraso.`);
+          return;
+        }
+        appState.cart[productId].qty = newQty;
+      }
+
+      renderPOSProducts();
+    }
+
+    function updatePOSFooterTotal() {
+      let total = 0;
+      let totalCount = 0;
+      Object.values(appState.cart).forEach(item => {
+        total += item.unitPrice * item.qty;
+        totalCount += item.qty;
+      });
+
+      document.getElementById('posTotalAmountDue').innerText = '₱' + total.toFixed(2);
+      document.getElementById('cartDrawerTotal').innerText = '₱' + total.toFixed(2);
+      document.getElementById('posOrdersBadge').innerText = totalCount;
+    }
+
+    function openInventoryModal() {
+      document.getElementById('inventoryModal').classList.remove('hidden');
+      renderInventoryList();
+    }
+
+    function closeInventoryModal() {
+      document.getElementById('inventoryModal').classList.add('hidden');
+    }
+
+    function renderInventoryList(searchQuery = '') {
+      const container = document.getElementById('inventoryListContainer');
+      const q = searchQuery.toLowerCase().trim();
+
+      const items = appState.products.filter(p => {
+        return !q || p.name.toLowerCase().includes(q) || String(p.product_id).toLowerCase().includes(q);
+      });
+
+      if (items.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">Walang nahanap na paninda.</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(p => `
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-purple-600 font-mono block">${p.product_id}</span>
+            <h4 class="font-bold text-slate-800 text-xs">${p.name}</h4>
+            <span class="text-[10px] text-slate-400 block">${p.category || 'General'}</span>
+          </div>
+          <div class="text-right">
+            <span class="font-extrabold text-slate-900 text-xs block">₱${Number(p.selling_price).toFixed(2)}</span>
+            <span class="text-[10px] font-semibold text-slate-500">Stock: ${p.stock_qty}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openReportsModal() {
+      document.getElementById('reportsModal').classList.remove('hidden');
+    }
+
+    function closeReportsModal() {
+      document.getElementById('reportsModal').classList.add('hidden');
+    }
+
+    function generateDateRangeReport() {
+      const totalSalesVal = appState.sales.reduce((acc, s) => acc + Number(s.total_amount || 0), 0);
+      const estimatedProfit = totalSalesVal * 0.20;
+
+      document.getElementById('repTotalSales').innerText = '₱' + totalSalesVal.toFixed(2);
+      document.getElementById('repGrossProfit').innerText = '₱' + estimatedProfit.toFixed(2);
+    }
+
+    function openCartDrawer() {
+      renderCartItems();
+      document.getElementById('cartDrawerModal').classList.remove('hidden');
+    }
+
+    function closeCartDrawer() {
+      document.getElementById('cartDrawerModal').classList.add('hidden');
+    }
+
+    function renderCartItems() {
+      const container = document.getElementById('cartItemsContainer');
+      const items = Object.values(appState.cart);
+
+      if (items.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">Walang laman ang cart.</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(i => `
+        <div class="p-2.5 bg-slate-50 rounded-xl flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-slate-800 text-xs">${i.name}</h4>
+            <span class="text-[10px] text-slate-500">₱${i.unitPrice.toFixed(2)} x ${i.qty}</span>
+          </div>
+          <span class="font-bold text-xs text-slate-800">₱${(i.unitPrice * i.qty).toFixed(2)}</span>
+        </div>
+      `).join('');
+    }
+
+    function initiateCheckout(paymentType) {
+      const items = Object.values(appState.cart);
+      if (items.length === 0) {
+        alert('Magdagdag muna ng paninda sa cart!');
+        return;
+      }
+
+      let totalAmount = 0;
+      items.forEach(i => totalAmount += i.unitPrice * i.qty);
+
+      let customerName = 'Walk-in Suki';
+      if (paymentType === 'Utang') {
+        customerName = prompt('Pangalan ng Suki para sa Utang:');
+        if (!customerName) return;
+      }
+
+      const payload = {
+        totalAmount: totalAmount,
+        amountPaid: paymentType === 'Cash' ? totalAmount : 0,
+        changeDue: 0,
+        paymentType: paymentType,
+        customerName: customerName,
+        items: items
+      };
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(res => {
+            if (res && res.success) {
+              alert('Matagumpay ang benta! ID: ' + res.saleId);
+              appState.cart = {};
+              closeCartDrawer();
+              loadRemoteData();
+            } else {
+              alert('May problema: ' + res.error);
+            }
+          })
+          .processTransaction(payload);
+      } else {
+        alert('Matagumpay ang benta!');
+        appState.sales.push({ total_amount: totalAmount });
+        items.forEach(item => {
+          const prod = appState.products.find(p => p.product_id === item.productId);
+          if (prod) prod.stock_qty -= item.qty;
+        });
+        appState.cart = {};
+        closeCartDrawer();
+        renderPOSProducts();
+        updateFinancialSummary();
+      }
+    }
+
+    function addNewCustomerUtang() {
+      const name = prompt('Pangalan ng Suki:');
+      const amount = prompt('Halaga ng Utang (₱):');
+      if (name && amount) {
+        const payload = {
+          totalAmount: Number(amount),
+          amountPaid: 0,
+          changeDue: 0,
+          paymentType: 'Utang',
+          customerName: name,
+          items: [{ productId: 'NON-INV-UTANG', name: 'Manual Credit Entry', unitPrice: Number(amount), qty: 1 }]
+        };
+
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run.withSuccessHandler(() => {
+            alert('Nailista ang utang para kay ' + name);
+            loadRemoteData();
+          }).processTransaction(payload);
+        } else {
+          appState.utang.push({ utang_id: 'UTANG-NEW', customer_name: name, balance: Number(amount), status: 'Unpaid' });
+          renderUtangList();
+        }
+      }
+    }
+  </script>
+</body>
+</html>
