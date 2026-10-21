@@ -34,6 +34,12 @@ SmartSari Sari Store/
 
 ## First-Time Setup
 
+> **Status: already deployed and verified (2026-10-21).**
+> The live project is bound to the "Smart Sari Sari Store" spreadsheet
+> (script ID `1BASskaeTUEGbtrg5j7kJCpyyax_sN3JxwrhLA1yP7pYISUj7nu8yee2_`)
+> and the suite passes **23/23**. Steps below are for a *fresh* rebuild or a
+> second environment (e.g. the professor's demo account).
+
 1. **Create the project**
    - Go to your Google Sheet → **Extensions → Apps Script** (this binds the
      project to the spreadsheet automatically — required, since the code
@@ -42,10 +48,29 @@ SmartSari Sari Store/
      the **V8 runtime** automatically. (The old "Use the V8 runtime" checkbox
      only existed in the legacy editor and has been removed.)
 
-2. **Paste the files (order doesn’t matter — one shared global scope)**
-   - For each file in `appscript/`: **＋ → Script**, name it *exactly* like the file
-     (e.g. `DSA_HashTable`), paste the contents, save.
-   - For the frontend: **＋ → HTML**, name it *exactly* `Index`, paste `Index.html`.
+2. **Get the files in — use `clasp`, do NOT paste**
+
+   Pasting into the editor corrupted UTF-8 on this project (emoji and `₱`
+   became mojibake — see `tests/Unit_Tests.md` → Notes). The reliable way:
+
+   ```powershell
+   npm.cmd install -g @google/clasp      # npm.ps1 is blocked by policy
+   clasp login                           # authorize in the browser
+   # enable https://script.google.com/home/usersettings  (Apps Script API) once
+
+   cd "Desktop\SmartSari Sari Store"
+   clasp push -f                         # uses .clasp.json + appscript/appsscript.json
+   clasp redeploy <deploymentId> -d "msg"
+   ```
+
+   `.clasp.json` in the repo already points at `appscript/` and the correct
+   script ID, so `clasp push -f` syncs all 14 files plus the manifest.
+
+   *(Manual fallback: for each file in `appscript/`, **＋ → Script**, name it
+   exactly like the file — e.g. `DSA_HashTable`, not `DSA_HashTable.gs` — and
+   paste contents; for the frontend **＋ → HTML**, name it `Index`. Verify the
+   emoji render correctly afterwards.)*
+
 
 3. **Initialize the database**
    - In the editor’s function dropdown pick `initializeDatabase` → **Run**
@@ -103,4 +128,18 @@ because the HTML sandbox cannot see `.gs` classes.
 - Batched writes everywhere, ID collision hardening, locks on all writes
 - 500-record benchmarks (MergeSort/BinarySearch/heap timing table)
 - Responsive desktop pass + full PWA-lite metas/icons
+- Client suite (7 assertions) run in demo/offline mode — still unchecked in
+  `tests/Unit_Tests.md`
 - README/docs final drafts → Week 4 (video, slides, declaration w/ AI disclosure)
+
+## Deployment Log
+
+| Version | Date | Contents |
+|---------|------|----------|
+| v1 | 2026-10-21 08:55 | First web-app deployment (anyone / execute as me) |
+| v2 | 2026-10-21 09:30 | Pre-fix snapshot (characters still mojibake) |
+| v3 | 2026-10-21 18:45 | UTF-8 fix via `clasp push` — emoji/₱ restored |
+| v4 | 2026-10-21 | Bug fixes B1–B4 + V8 comment correction |
+| v5 | 2026-10-21 | Week 2 close-out; suite verified **23/23** |
+
+Live URL: `https://script.google.com/macros/s/AKfycbyuDl2VZGFzNv2Ehc9mAJrJDTmJE-G5W-lT0ZGXumocST205Mw-5kv95Hyh_QLEabZH0Q/exec`
