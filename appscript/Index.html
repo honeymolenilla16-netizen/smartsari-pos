@@ -72,7 +72,13 @@
         right: auto;
         width: 15rem;
         max-width: 15rem;
-        margin: 0;
+        /* longhands, not the `margin` shorthand: Tailwind's `mx-auto` sets
+           margin-left/right longhands and, being injected later, would win
+           against a shorthand at the same specificity. */
+        margin-top: 0;
+        margin-bottom: 0;
+        margin-left: 0;
+        margin-right: 0;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
