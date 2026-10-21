@@ -60,66 +60,79 @@
 
     /* Desktop: bottom tab bar becomes a fixed left rail */
     @media (min-width: 1024px) {
-      .app-nav {
-        top: 0; bottom: 0; right: auto; left: 0;
+      /* NOTE: Tailwind CDN injects its utilities *after* this block, so these
+         rules must out-specify the utility classes (hence .app-nav.app-nav).
+         Without resetting `right` + `margin`, left:0+right:0+margin:auto
+         centres the rail in the viewport instead of pinning it left. */
+      .app-nav.app-nav {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: auto;
         width: 15rem;
         max-width: 15rem;
         margin: 0;
+        display: flex;
         flex-direction: column;
         justify-content: flex-start;
+        align-items: stretch;
         gap: 0.25rem;
         padding: 1rem 0.75rem;
         border-top: none;
         border-right: 1px solid rgb(241 245 249);
         box-shadow: 0 10px 30px rgba(0,0,0,.06);
       }
-      .app-nav button {
-        width: 100% !important;
+      .app-nav.app-nav button {
+        width: 100%;
         flex-direction: row;
         justify-content: flex-start;
         gap: 0.75rem;
         padding: 0.75rem 1rem;
         border-radius: 0.9rem;
-        font-size: 0.8rem !important;
+        font-size: 0.8rem;
         text-align: left;
       }
-      .app-nav button i { width: 1.15rem; height: 1.15rem; }
-      .app-nav button:hover { background: rgb(248 250 252); }
-      /* nav labels rendered at a readable desktop size */
-      .app-nav button span { font-size: 0.8rem; }
+      .app-nav.app-nav button i { width: 1.15rem; height: 1.15rem; }
+      .app-nav.app-nav button:hover { background: rgb(248 250 252); }
+      .app-nav.app-nav button span { font-size: 0.8rem; }
 
       /* Release the phone-width clamp on every screen + shift for the rail */
-      .screen-view {
-        max-width: 72rem !important;
-        margin-left: 15rem !important;
-        margin-right: auto !important;
-        padding-bottom: 2.5rem !important;
+      .screen-view.screen-view {
+        max-width: none;
+        width: auto;
+        margin-left: 15rem;
+        margin-right: 0;
+        padding-bottom: 2.5rem;
       }
       /* the fixed mobile checkout bar sits inside the content column */
-      .pos-checkout-bar {
+      .pos-checkout-bar.pos-checkout-bar {
         left: 15rem;
         right: 0;
-        max-width: 72rem !important;
-        margin-left: 0 !important;
+        bottom: 0;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
       }
       /* Home dashboard: widgets flow into a responsive grid */
-      #screen-home .home-actions { grid-template-columns: repeat(4, minmax(0,1fr)); }
-      #screen-home .home-ledgers { grid-template-columns: repeat(4, minmax(0,1fr)); }
+      #screen-home .home-actions { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); }
+      #screen-home .home-ledgers { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); }
 
       /* POS: products become a dense multi-column catalogue */
       #productGrid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .5rem; }
       #screen-pos > .p-3 { padding: 1rem; }
 
       /* Modals stay centred but get a wider, more usable footprint */
-      .modal-panel { max-width: 32rem !important; max-height: 88vh !important; }
-      .modal-panel-lg { max-width: 48rem !important; }
+      .modal-panel.modal-panel { max-width: 32rem; max-height: 88vh; }
+      .modal-panel-lg.modal-panel-lg { max-width: 48rem; }
 
       /* Cart drawer: bottom sheet on mobile -> centred dialog on desktop */
-      .cart-drawer-panel {
-        left: 50%; right: auto;
+      .cart-drawer-panel.cart-drawer-panel {
+        left: 50%;
+        right: auto;
         transform: translateX(-50%);
         bottom: 2.5rem;
-        max-width: 34rem !important;
+        max-width: 34rem;
         max-height: 80vh;
         border-radius: 1.5rem;
       }
