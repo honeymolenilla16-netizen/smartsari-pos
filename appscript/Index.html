@@ -470,6 +470,39 @@
   </div>
 
   <!-- ==================== MODALS ==================== -->
+  <!-- In-app dialog + toast system (replaces native alert/prompt/confirm so
+       nothing renders as browser chrome). Driven by uiAlert/uiPrompt/uiConfirm
+       in the script block below. -->
+  <div id="uiToastHost" class="fixed top-4 left-1/2 -translate-x-1/2 z-[70] w-full max-w-sm px-4 space-y-2 pointer-events-none lg:left-[calc(50%+7.5rem)]"></div>
+
+  <div id="uiDialogModal" class="fixed inset-0 z-[80] hidden items-center justify-center p-4">
+    <div onclick="closeUiDialog()" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="modal-panel relative bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-3 z-10">
+      <div class="flex items-start gap-3">
+        <div id="uiDialogIcon" class="w-10 h-10 rounded-2xl bg-pink-50 text-peddlr-600 flex items-center justify-center shrink-0">
+          <i data-lucide="info" class="w-5 h-5"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <h3 id="uiDialogTitle" class="font-display font-bold text-slate-800 text-sm">Pansinin</h3>
+          <p id="uiDialogMessage" class="text-xs text-slate-500 leading-relaxed mt-1 whitespace-pre-line"></p>
+        </div>
+      </div>
+
+      <div id="uiDialogInputWrap" class="hidden">
+        <label id="uiDialogInputLabel" for="uiDialogInput" class="block text-[11px] font-bold text-slate-500 mb-1"></label>
+        <input id="uiDialogInput" type="text" autocomplete="off"
+               class="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-peddlr-400 focus:ring-2 focus:ring-peddlr-100"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();uiDialogSubmit();}">
+        <p id="uiDialogError" class="hidden text-[11px] font-bold text-rose-600 mt-1"></p>
+      </div>
+
+      <div class="flex gap-2 pt-1">
+        <button id="uiDialogCancelBtn" onclick="closeUiDialog()" class="hidden flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">Kansel</button>
+        <button id="uiDialogOkBtn" onclick="uiDialogSubmit()" class="flex-1 py-2.5 rounded-xl peddlr-pink-gradient hover:opacity-95 text-white font-bold text-xs shadow-md transition">OK</button>
+      </div>
+    </div>
+  </div>
+
   <div id="cashLedgerModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div onclick="closeModal('cashLedgerModal')" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
     <div class="modal-panel relative bg-white w-full max-w-sm rounded-3xl p-4 shadow-2xl space-y-3 max-h-[85vh] flex flex-col z-10">
@@ -941,7 +974,13 @@
       const emailInput = document.getElementById('profileAlertEmail');
       if (emailInput && !emailInput.value) emailInput.value = appState.alertEmail || '';
     }
-    function openOrdersModal() { alert('Orders History Module: Active ' + appState.sales.length + ' transactions.'); }
+    function openOrdersModal() {
+      uiAlert('Orders History: ' + appState.sales.length + ' transactions ang naitala.\n\nAng buong Orders History screen ay darating sa susunod na update.', {
+        title: 'Orders History',
+        icon: 'receipt',
+        iconClass: 'bg-peddlr-50 text-peddlr-600'
+      });
+    }
     function openPurchasesModal() { openInventoryModal(); }
     function showScreen(screenId) {
       document.querySelectorAll('.screen-view').forEach(s => s.classList.add('hidden'));
@@ -1143,21 +1182,224 @@
     }
 
     /* ==================================================================
+     * UI DIALOG SYSTEM (in-app alert / prompt / confirm + toasts)
+     * ------------------------------------------------------------------
+     * Native alert()/prompt() render as unstyled browser chrome and block
+     * the page. These helpers keep every message inside the app's own UI.
+     * `uiDialogState` holds the pending promise resolver so the modal can
+     * be reused for alert / confirm / prompt without extra markup.
+     * ================================================================== */
+    const uiDialogState = { resolve: null, mode: 'alert', validate: null };
+
+    function uiDialogVisible() {
+      return !document.getElementById('uiDialogModal').classList.contains('hidden');
+    }
+
+    /** Show the shared dialog shell. */
+    function openUiDialog(opts) {
+      document.getElementById('uiDialogTitle').textContent = opts.title || 'Pansinin';
+      document.getElementById('uiDialogMessage').textContent = opts.message || '';
+      document.getElementById('uiDialogIcon').className =
+        'w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ' + (opts.iconClass || 'bg-pink-50 text-peddlr-600');
+
+      const iconWrap = document.getElementById('uiDialogIcon');
+      iconWrap.innerHTML = '<i data-lucide="' + (opts.icon || 'info') + '" class="w-5 h-5"></i>';
+
+      const inputWrap = document.getElementById('uiDialogInputWrap');
+      const input = document.getElementById('uiDialogInput');
+      const errEl = document.getElementById('uiDialogError');
+      errEl.classList.add('hidden');
+      errEl.textContent = '';
+
+      if (opts.mode === 'prompt') {
+        inputWrap.classList.remove('hidden');
+        document.getElementById('uiDialogInputLabel').textContent = opts.inputLabel || '';
+        input.type = opts.inputType || 'text';
+        input.value = opts.defaultValue || '';
+        input.placeholder = opts.placeholder || '';
+      } else {
+        inputWrap.classList.add('hidden');
+        input.value = '';
+      }
+
+      document.getElementById('uiDialogCancelBtn').classList.toggle('hidden', opts.mode === 'alert');
+      document.getElementById('uiDialogOkBtn').textContent = opts.okText || 'OK';
+
+      const modal = document.getElementById('uiDialogModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide && lucide.createIcons) lucide.createIcons();
+
+      if (opts.mode === 'prompt') setTimeout(() => { input.focus(); input.select(); }, 60);
+    }
+
+    /** Resolve whatever promise is pending and hide the shell. */
+    function closeUiDialog(value) {
+      const modal = document.getElementById('uiDialogModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      const r = uiDialogState.resolve;
+      uiDialogState.resolve = null;
+      uiDialogState.validate = null;
+      if (r) r(value);
+    }
+
+    function uiDialogSubmit() {
+      const input = document.getElementById('uiDialogInput');
+      if (uiDialogState.mode === 'prompt') {
+        const val = input.value;
+        if (typeof uiDialogState.validate === 'function') {
+          const msg = uiDialogState.validate(val);
+          if (msg) {
+            const errEl = document.getElementById('uiDialogError');
+            errEl.textContent = msg;
+            errEl.classList.remove('hidden');
+            input.focus();
+            return;
+          }
+        }
+        closeUiDialog(val);
+        return;
+      }
+      closeUiDialog(uiDialogState.mode === 'confirm');
+    }
+
+    /** Promise-based replacement for alert(). */
+    function uiAlert(message, opts) {
+      opts = opts || {};
+      return new Promise(resolve => {
+        uiDialogState.resolve = resolve;
+        uiDialogState.mode = 'alert';
+        openUiDialog({
+          mode: 'alert',
+          title: opts.title || 'Pansinin',
+          message: message,
+          icon: opts.icon || 'info',
+          iconClass: opts.iconClass || 'bg-pink-50 text-peddlr-600',
+          okText: opts.okText || 'OK'
+        });
+      });
+    }
+
+    /** Promise-based replacement for prompt(). Resolves null when cancelled. */
+    function uiPrompt(message, opts) {
+      opts = opts || {};
+      return new Promise(resolve => {
+        uiDialogState.resolve = resolve;
+        uiDialogState.mode = 'prompt';
+        uiDialogState.validate = opts.validate || null;
+        openUiDialog({
+          mode: 'prompt',
+          title: opts.title || 'Kailangan ng Input',
+          message: message,
+          icon: opts.icon || 'pencil',
+          iconClass: opts.iconClass || 'bg-indigo-50 text-indigo-600',
+          inputLabel: opts.inputLabel || '',
+          inputType: opts.inputType || 'text',
+          defaultValue: opts.defaultValue || '',
+          placeholder: opts.placeholder || '',
+          okText: opts.okText || 'I-save'
+        });
+      });
+    }
+
+    /** Promise-based replacement for confirm(). */
+    function uiConfirm(message, opts) {
+      opts = opts || {};
+      return new Promise(resolve => {
+        uiDialogState.resolve = resolve;
+        uiDialogState.mode = 'confirm';
+        openUiDialog({
+          mode: 'confirm',
+          title: opts.title || 'Kumpirmahin',
+          message: message,
+          icon: opts.icon || 'alert-triangle',
+          iconClass: opts.iconClass || 'bg-amber-50 text-amber-600',
+          okText: opts.okText || 'Oo'
+        });
+      });
+    }
+
+    /** Transient success/info toast, anchored to the app (never browser chrome). */
+    function uiToast(message, kind) {
+      const host = document.getElementById('uiToastHost');
+      if (!host) return;
+      const tone = {
+        success: 'bg-emerald-600',
+        error: 'bg-rose-600',
+        warn: 'bg-amber-500',
+        info: 'bg-slate-800'
+      }[kind || 'success'] || 'bg-emerald-600';
+      const el = document.createElement('div');
+      el.className = tone + ' text-white text-xs font-bold rounded-2xl px-4 py-3 shadow-2xl flex items-start gap-2 pointer-events-auto opacity-0 translate-y-2 transition-all duration-200';
+      const icon = kind === 'error' ? 'x-circle' : (kind === 'warn' ? 'alert-triangle' : 'check-circle-2');
+      el.innerHTML = '<i data-lucide="' + icon + '" class="w-4 h-4 shrink-0 mt-[1px]"></i><span class="leading-snug"></span>';
+      el.querySelector('span').textContent = String(message);
+      host.appendChild(el);
+      if (window.lucide && lucide.createIcons) lucide.createIcons();
+      requestAnimationFrame(() => {
+        el.classList.remove('opacity-0', 'translate-y-2');
+        el.classList.add('opacity-100', 'translate-y-0');
+      });
+      const life = kind === 'error' ? 5200 : 3200;
+      setTimeout(() => {
+        el.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => el.remove(), 250);
+      }, life);
+    }
+
+    /** Kinetic escape-key handling for the dialog. */
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && uiDialogVisible()) {
+        e.preventDefault();
+        closeUiDialog(uiDialogState.mode === 'prompt' ? null : uiDialogState.mode === 'confirm' ? false : undefined);
+      }
+    });
+
+    /* ==================================================================
      * ADMIN PIN + FINANCIAL SUMMARY
      * ================================================================== */
-    function promptAdminPin() {
-      if (typeof google !== 'undefined' && google.script && google.script.run) {
-        const pin = prompt('Ipasok ang Admin PIN Code:');
-        if (!pin) return;
-        google.script.run
-          .withSuccessHandler(res => {
-            if (res && res.authorized) unlockAdminFinancials();
-            else alert(res.error || 'Maling PIN!');
-          })
-          .verifyAuthCode(pin);
-      } else {
-        unlockAdminFinancials();
+    async function promptAdminPin() {
+      const pin = await uiPrompt('Ipasok ang Admin PIN Code para makita ang kita at cash summary.', {
+        title: 'Admin PIN',
+        icon: 'lock',
+        iconClass: 'bg-peddlr-50 text-peddlr-600',
+        inputLabel: 'Admin PIN',
+        inputType: 'password',
+        placeholder: '••••',
+        okText: 'I-unlock'
+      });
+      if (pin === null) return;
+
+      // Demo/offline mode: no backend, accept the documented default PIN.
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        if (String(pin).trim() === '1234') unlockAdminFinancials();
+        else uiAlert('Maling PIN! Sa demo mode, gamitin ang 1234.', {
+          title: 'Maling PIN', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600'
+        });
+        return;
       }
+
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res && res.authorized) {
+            unlockAdminFinancials();
+          } else if (res && res.error) {
+            uiAlert(res.error, {
+              title: 'Maling PIN', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600'
+            });
+          } else {
+            uiAlert('Maling PIN code! Pakisubukan ulit.', {
+              title: 'Maling PIN', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600'
+            });
+          }
+        })
+        .withFailureHandler(err => {
+          uiAlert('Hindi ma-verify ang PIN. Subukan ulit.\n\n' + (err && err.message ? err.message : err), {
+            title: 'May Problema', icon: 'alert-triangle', iconClass: 'bg-amber-50 text-amber-600'
+          });
+        })
+        .verifyAuthCode(pin);
     }
     function unlockAdminFinancials() {
       appState.isAdminView = true;
@@ -1187,7 +1429,7 @@
       const type = document.getElementById('cashEntryType').value;
       const amount = Number(document.getElementById('cashEntryAmount').value);
       const note = document.getElementById('cashEntryNote').value;
-      if (!amount || amount <= 0) return alert('Maglagay ng valid na halaga!');
+      if (!amount || amount <= 0) { uiToast('Maglagay ng valid na halaga!', 'warn'); return; }
 
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(() => {
@@ -1243,12 +1485,24 @@
       `).join('');
     }
 
-    function payUtangPrompt(utangId, name) {
-      const amt = prompt('Magkano ang ibabayad ni ' + name + '?');
-      if (!amt || isNaN(amt) || Number(amt) <= 0) return;
+    async function payUtangPrompt(utangId, name) {
+      const amt = await uiPrompt('Magkano ang ibabayad ni ' + name + '?', {
+        title: 'Bayad sa Utang',
+        icon: 'hand-coins',
+        iconClass: 'bg-emerald-50 text-emerald-600',
+        inputLabel: 'Halaga (₱)',
+        inputType: 'number',
+        placeholder: '0.00',
+        okText: 'I-record'
+      });
+      if (amt === null) return;
+      if (!amt || isNaN(amt) || Number(amt) <= 0) {
+        uiToast('Maglagay ng valid na halaga!', 'warn');
+        return;
+      }
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(() => {
-          alert('Nai-record ang bayad sa utang!');
+          uiToast('Nai-record ang bayad sa utang!', 'success');
           loadRemoteData();
         }).recordUtangPayment(utangId, name, Number(amt), 'Partial Payment');
       } else {
@@ -1265,15 +1519,15 @@
       const cat = document.getElementById('expenseCategory').value;
       const amt = Number(document.getElementById('expenseAmount').value);
       const desc = document.getElementById('expenseDesc').value;
-      if (!amt || amt <= 0) return alert('Maglagay ng halaga!');
+      if (!amt || amt <= 0) { uiToast('Maglagay ng halaga!', 'warn'); return; }
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(() => {
-          alert('Expense recorded!');
+          uiToast('Naitala ang gastos!', 'success');
           closeModal('expensesModal');
           loadRemoteData();
         }).saveExpense(cat, amt, desc);
       } else {
-        alert('Expense recorded!');
+        uiToast('Naitala ang gastos!', 'success');
         closeModal('expensesModal');
       }
     }
@@ -1284,25 +1538,25 @@
       const fee = Number(document.getElementById('gcashFee').value) || 0;
       const ref = document.getElementById('gcashRef').value;
       const cust = document.getElementById('gcashCustomer').value;
-      if (!amt || amt <= 0) return alert('Maglagay ng valid na halaga!');
+      if (!amt || amt <= 0) { uiToast('Maglagay ng valid na halaga!', 'warn'); return; }
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(() => {
-          alert('GCash transaction saved!');
+          uiToast('Naitala ang GCash transaction!', 'success');
           closeModal('gcashModal');
           loadRemoteData();
         }).recordGCashTxn(type, amt, fee, ref, cust);
       } else {
-        alert('GCash transaction saved!');
+        uiToast('Naitala ang GCash transaction!', 'success');
         closeModal('gcashModal');
       }
     }
 
     function submitNewFloat() {
       const val = Number(document.getElementById('inputFloatValue').value);
-      if (isNaN(val) || val < 0) return alert('Maglagay ng valid na float!');
+      if (isNaN(val) || val < 0) { uiToast('Maglagay ng valid na float!', 'warn'); return; }
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(() => {
-          alert('Float updated!');
+          uiToast('Na-update ang float!', 'success');
           closeModal('floatModal');
           loadRemoteData();
         }).updateStartingFloat(val);
@@ -1316,18 +1570,22 @@
     function submitDailyRemit() {
       const actual = Number(document.getElementById('remitActualCash').value);
       const by = document.getElementById('remitClosedBy').value;
-      if (isNaN(actual)) return alert('Mag-enter ng cash count!');
+      if (isNaN(actual)) { uiToast('Mag-enter ng cash count!', 'warn'); return; }
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(res => {
           if (res && res.success) {
-            alert('Remittance Saved!\nExpected: ₱' + res.expectedCash.toFixed(2) + '\nActual: ₱' + res.actual.toFixed(2) + '\nDiscrepancy: ₱' + res.discrepancy.toFixed(2));
+            uiAlert('Nai-save ang remittance!\n\nExpected: ₱' + res.expectedCash.toFixed(2) + '\nActual: ₱' + res.actual.toFixed(2) + '\nDiscrepancy: ₱' + res.discrepancy.toFixed(2), {
+              title: 'Remittance Saved',
+              icon: 'lock',
+              iconClass: 'bg-emerald-50 text-emerald-600'
+            });
           } else {
-            alert('Error: ' + (res && res.error));
+            uiAlert('Error: ' + (res && res.error), { title: 'May Problema', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600' });
           }
           closeModal('remitModal');
         }).closeDailyRemittance(actual, by);
       } else {
-        alert('Remittance Saved!');
+        uiToast('Nai-save ang remittance!', 'success');
         closeModal('remitModal');
       }
     }
@@ -1337,16 +1595,16 @@
       const owner = document.getElementById('profileOwnerName').value;
       const phone = document.getElementById('profilePhone').value;
       const pin = document.getElementById('profileNewPin').value;
-      if (!name) return alert('Ipasok ang pangalan ng store!');
+      if (!name) { uiToast('Ipasok ang pangalan ng store!', 'warn'); return; }
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(() => {
-          alert('Store Settings Saved!');
+          uiToast('Nai-save ang store settings!', 'success');
           closeModal('tindahanModal');
           loadRemoteData();
         }).updateStoreProfile(name, owner, phone, pin);
       } else {
         document.getElementById('displayStoreName').innerText = name;
-        alert('Store Settings Saved!');
+        uiToast('Nai-save ang store settings!', 'success');
         closeModal('tindahanModal');
       }
     }
@@ -1356,14 +1614,18 @@
      * ================================================================== */
     function saveAlertEmail() {
       const email = document.getElementById('profileAlertEmail').value.trim();
-      if (!email) return alert('Ipasok muna ang email address!');
+      if (!email) { uiToast('Ipasok muna ang email address!', 'warn'); return; }
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(res => {
-          alert(res && res.success ? 'Email saved!' : 'Error: ' + (res && res.error));
-          if (res && res.success) appState.alertEmail = email;
+          if (res && res.success) {
+            uiToast('Nai-save ang email!', 'success');
+            appState.alertEmail = email;
+          } else {
+            uiAlert('Error: ' + (res && res.error), { title: 'May Problema', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600' });
+          }
         }).setAlertEmail(email);
       } else {
-        alert('Demo mode: email alerts need the GAS backend.');
+        uiToast('Demo mode: kailangan ng GAS backend ang email alerts.', 'warn');
       }
     }
 
@@ -1416,17 +1678,17 @@
       const cost = Number(document.getElementById('invCost').value);
       const price = Number(document.getElementById('invPrice').value);
       const qty = Number(document.getElementById('invQty').value);
-      if (!code || !name || price <= 0 || qty <= 0) return alert('Kumpletuhin ang product info!');
+      if (!code || !name || price <= 0 || qty <= 0) { uiToast('Kumpletuhin ang product info!', 'warn'); return; }
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(() => {
-          alert('Product Added / Restocked!');
+          uiToast('Naidagdag / na-restock ang paninda!', 'success');
           loadRemoteData();
         }).addInventoryProduct(code, name, 'General', cost, price, qty);
       } else {
         appState.products.push({ product_id: code, name: name, selling_price: price, stock_qty: qty });
         renderPOSProducts();
         renderInventoryList();
-        alert('Product Added!');
+        uiToast('Naidagdag ang paninda!', 'success');
       }
     }
 
@@ -1510,7 +1772,7 @@
         delete appState.cart[productId];
       } else {
         if (newQty > prod.stock_qty) {
-          alert('Kulang ang stock para sa ' + prod.name + '. Mayroon na lang ' + prod.stock_qty + ' piraso.');
+          uiAlert('Kulang ang stock para sa ' + prod.name + '. Mayroon na lang ' + prod.stock_qty + ' piraso.', { title: 'Kulang ang Stock', icon: 'alert-triangle', iconClass: 'bg-amber-50 text-amber-600' });
           return;
         }
         appState.cart[productId].qty = newQty;
@@ -1577,7 +1839,7 @@
     function generateDateRangeReport() {
       const start = document.getElementById('reportStartDate').value;
       const end = document.getElementById('reportEndDate').value;
-      if (!start || !end) return alert('Pumili ng start at end date.');
+      if (!start || !end) { uiToast('Pumili ng start at end date.', 'warn'); return; }
 
       const btn = document.getElementById('generateReportBtn');
       btn.disabled = true;
@@ -1589,12 +1851,12 @@
             btn.disabled = false;
             btn.innerHTML = '<span>Generate Report</span>';
             if (res && res.success) renderReportResults(res.report);
-            else alert('Report error: ' + (res && res.error));
+            else uiAlert('Report error: ' + (res && res.error), { title: 'Report Error', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600' });
           })
           .withFailureHandler(err => {
             btn.disabled = false;
             btn.innerHTML = '<span>Generate Report</span>';
-            alert('Report error: ' + err);
+            uiAlert('Report error: ' + err, { title: 'Report Error', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600' });
           })
           .getSalesReport(start, end);
       } else {
@@ -1663,7 +1925,7 @@
           .withFailureHandler(() => {
             btn.disabled = false;
             btn.innerHTML = '<span>Run DSA Tests</span>';
-            alert('Test run failed - check the Apps Script logs.');
+            uiToast('Nabigo ang test run — tingnan ang Apps Script logs.', 'error');
           })
           .runDsaUnitTests();
       } else {
@@ -1755,10 +2017,10 @@
       `).join('');
     }
 
-    function initiateCheckout(paymentType) {
+    async function initiateCheckout(paymentType) {
       const items = Object.values(appState.cart);
       if (items.length === 0) {
-        alert('Magdagdag muna ng paninda sa cart!');
+        uiToast('Magdagdag muna ng paninda sa cart!', 'warn');
         return;
       }
 
@@ -1768,9 +2030,26 @@
       let customerName = 'Walk-in Suki';
       let phoneNumber = '';
       if (paymentType === 'Utang') {
-        customerName = prompt('Pangalan ng Suki para sa Utang:');
-        if (!customerName) return;
-        phoneNumber = prompt('Mobile Number ng Suki (optional):') || '';
+        customerName = await uiPrompt('Pangalan ng Suki para sa Utang:', {
+          title: 'Utang Checkout',
+          icon: 'book-open',
+          iconClass: 'bg-rose-50 text-rose-500',
+          inputLabel: 'Pangalan ng Suki',
+          placeholder: 'Hal. Aling Nena',
+          okText: 'Susunod'
+        });
+        if (customerName === null || !String(customerName).trim()) return;
+        const phone = await uiPrompt('Mobile Number ng Suki (optional):', {
+          title: 'Numero ng Suki',
+          icon: 'smartphone',
+          iconClass: 'bg-blue-50 text-blue-600',
+          inputLabel: 'Mobile Number (opsyonal)',
+          inputType: 'tel',
+          placeholder: '09xx xxx xxxx',
+          okText: 'Ituloy'
+        });
+        if (phone === null) return;
+        phoneNumber = phone || '';
       }
 
       const payload = {
@@ -1787,17 +2066,17 @@
         google.script.run
           .withSuccessHandler(res => {
             if (res && res.success) {
-              alert('Matagumpay ang benta! ID: ' + res.saleId);
+              uiToast('Matagumpay ang benta! ID: ' + res.saleId, 'success');
               appState.cart = {};
               closeCartDrawer();
               loadRemoteData();
             } else {
-              alert('May problema: ' + res.error);
+              uiAlert('May problema: ' + res.error, { title: 'Hindi Natuloy', icon: 'x-circle', iconClass: 'bg-rose-50 text-rose-600' });
             }
           })
           .processTransaction(payload);
       } else {
-        alert('Matagumpay ang benta!');
+        uiToast('Matagumpay ang benta!', 'success');
         appState.sales.push({ total_amount: totalAmount });
         items.forEach(item => {
           const prod = appState.products.find(p => p.product_id === item.productId);
@@ -1810,10 +2089,39 @@
       }
     }
 
-    function addNewCustomerUtang() {
-      const name = prompt('Pangalan ng Suki:');
-      const amount = prompt('Halaga ng Utang (₱):');
-      const phone = prompt('Mobile Number (optional):') || '';
+    async function addNewCustomerUtang() {
+      const name = await uiPrompt('Pangalan ng Suki:', {
+        title: 'Bagong Utang',
+        icon: 'user-plus',
+        iconClass: 'bg-rose-50 text-rose-500',
+        inputLabel: 'Pangalan ng Suki',
+        placeholder: 'Hal. Mang Tonyo',
+        okText: 'Susunod'
+      });
+      if (name === null || !String(name).trim()) return;
+
+      const amount = await uiPrompt('Halaga ng Utang (₱):', {
+        title: 'Bagong Utang',
+        icon: 'coins',
+        iconClass: 'bg-amber-50 text-amber-600',
+        inputLabel: 'Halaga (₱)',
+        inputType: 'number',
+        placeholder: '0.00',
+        okText: 'Susunod'
+      });
+      if (amount === null) return;
+
+      const phone = await uiPrompt('Mobile Number (optional):', {
+        title: 'Numero ng Suki',
+        icon: 'smartphone',
+        iconClass: 'bg-blue-50 text-blue-600',
+        inputLabel: 'Mobile Number (opsyonal)',
+        inputType: 'tel',
+        placeholder: '09xx xxx xxxx',
+        okText: 'I-record'
+      });
+      if (phone === null) return;
+
       if (name && amount) {
         const payload = {
           totalAmount: Number(amount),
@@ -1821,12 +2129,12 @@
           changeDue: 0,
           paymentType: 'Utang',
           customerName: name,
-          phoneNumber: phone,
+          phoneNumber: phone || '',
           items: [{ productId: 'NON-INV-UTANG', name: 'Manual Credit Entry', unitPrice: Number(amount), qty: 1 }]
         };
         if (typeof google !== 'undefined' && google.script && google.script.run) {
           google.script.run.withSuccessHandler(() => {
-            alert('Nailista ang utang para kay ' + name);
+            uiToast('Nailista ang utang para kay ' + name, 'success');
             loadRemoteData();
           }).processTransaction(payload);
         } else {
