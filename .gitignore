@@ -2,3 +2,7 @@ Thumbs.db
 desktop.ini
 .DS_Store
 ~$
+
+# Apps Script / clasp local artifacts
+.clasprc.json
+appsscript/api_logs/

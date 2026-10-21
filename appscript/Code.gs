@@ -17,8 +17,8 @@
  *   DsaTests.gs            - unit test runner (runDsaUnitTests)
  *   DataSeeder.gs          - 500+ record sample dataset generator
  *
- * Project Settings -> ☑ "Use the V8 runtime" MUST be enabled
- * (classes are used throughout).
+ * Runtime: the V8 runtime is used automatically by all current Apps Script
+ * projects (the legacy "Use the V8 runtime" checkbox no longer exists).
  */
 
 /** Serve the frontend. Called on web app /exec visits. */
