@@ -37,9 +37,7 @@ class LedgerService {
 
   /**
    * Record a partial or full utang payment.
-   * DSA tie-in: CustomHashTable (O(1) average lookup by utang_id)
-   *             instead of linear scan. Finds ledger row then updates balance/status.
-   * Time  O(m + 1) where m = Utang_Ledger rows (build index) | Space O(m)
+   * DSA tie-in: finds the ledger row then updates balance/status.
    * @param {string} utangId
    * @param {string} customerName
    * @param {number} amountPaid
@@ -49,21 +47,17 @@ class LedgerService {
     try {
       const utangSheet = this.db.getSheet(SHEET_NAMES.UTANG);
       const data = utangSheet.getDataRange().getValues();
-      if (data.length <= 1) throw new Error('Utang record not found.');
+      let foundRow = -1;
+      let currentBalance = 0;
 
-      // Build id -> {rowIndex (1-based), balance} using CustomHashTable
-      const idx = new CustomHashTable(Math.max(16, data.length - 1));
       for (let i = 1; i < data.length; i++) {
-        idx.put(String(data[i][0]), {
-          rowIndex: i + 1,
-          balance: Number(data[i][5]) || 0
-        });
+        if (String(data[i][0]) === String(utangId)) {
+          foundRow = i + 1;
+          currentBalance = Number(data[i][5]) || 0;
+          break;
+        }
       }
-
-      const match = idx.get(String(utangId));
-      if (!match) throw new Error('Utang record not found.');
-      const foundRow = match.rowIndex;
-      let currentBalance = match.balance;
+      if (foundRow === -1) throw new Error('Utang record not found.');
 
       const payAmount = Number(amountPaid);
       const newBalance = Math.max(0, currentBalance - payAmount);

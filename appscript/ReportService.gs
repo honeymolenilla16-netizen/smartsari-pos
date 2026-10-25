@@ -89,31 +89,13 @@ class ReportService {
         .reduce((sum, u) => sum + (Number(u.balance) > 0 ? Number(u.balance) : 0), 0);
 
       // --- Expenses (total + per category) ---
-      // DSA #3: CustomMinHeap ranks largest expenses first (max-heap via inverted compare)
-      // Time O(k log k) where k = expenses in range | Space O(k)
       let totalExpenses = 0;
       const expensesByCategory = {};
-      const expensesList = [];
       for (const e of state.expenses.filter(e => inRange(e.timestamp))) {
         const amt = Number(e.amount) || 0;
         totalExpenses += amt;
         expensesByCategory[e.category] = (expensesByCategory[e.category] || 0) + amt;
-        expensesList.push({
-          expense_id: e.expense_id,
-          timestamp: e.timestamp,
-          category: e.category || 'Misc',
-          amount: amt,
-          description: e.description || ''
-        });
       }
-      const expHeap = new CustomMinHeap((a, b) => b.amount - a.amount); // max-heap by amount
-      for (const ex of expensesList) expHeap.push(ex);
-      const topExpenses = [];
-      const topN = Math.min(5, expHeap.size());
-      for (let i = 0; i < topN; i++) {
-        const v = expHeap.pop();
-        if (v) topExpenses.push({ category: v.category, amount: v.amount, description: v.description });
-      } // heap emptied for this read - cheap and avoids mutating report state
 
       // --- GCash summary ---
       let gcashIn = 0, gcashOut = 0, gcashFees = 0;
@@ -133,17 +115,11 @@ class ReportService {
         dailyMap[day].sales += Number(s.total_amount) || 0;
         dailyMap[day].transactions += 1;
       }
-      // DSA in Action trace: shows which structures/algos ran for this batch
-      this._dsaTrace = {
-        ts: Date.now(),
-        flow: 'getSalesReport',
-        uses: [
-          { dsa: 'CustomHashTable', op: 'group Sales_Items by sale_id', complexity: 'O(n)' },
-          { dsa: 'CustomHashTable', op: 'product cost/price lookup', complexity: 'O(p)' },
-          { dsa: 'MergeSort', op: 'dailyBreakdown newest-first', complexity: 'O(d log d)' },
-          { dsa: 'CustomMinHeap', op: 'rank top 5 expenses by amount', complexity: 'O(k log k)' }
-        ]
-      };
+      const dailyBreakdown = MergeSort.sort(
+        Object.values(dailyMap),
+        MergeSort.byFields([{ field: 'date', desc: true }])
+      );
+
       return {
         success: true,
         report: {
@@ -155,7 +131,6 @@ class ReportService {
           totalProfit: totalProfit,
           totalExpenses: totalExpenses,
           expensesByCategory: expensesByCategory,
-          topExpenses: topExpenses,              // NEW: heap-ranked largest expenses
           utangCollected: utangCollected,
           utangOutstanding: utangOutstanding,
           gcashIn: gcashIn,
