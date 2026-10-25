@@ -197,7 +197,7 @@
               <span class="font-display font-black text-xl tracking-tight leading-none text-white" id="displayStoreName">
                 SMART<span class="text-pink-200">SARI</span>
               </span>
-              <span class="text-[9px] bg-white/30 px-1.5 py-0.5 rounded-full text-white font-bold tracking-wider">PH 🇵🇭</span>
+              <span class="text-[9px] bg-white/30 px-1.5 py-0.5 rounded-full text-white font-bold tracking-wider">PH ðŸ‡µðŸ‡­</span>
             </div>
             <p class="text-[9px] text-pink-100 font-medium tracking-wide uppercase mt-0.5">Sari-Sari Store Management System</p>
           </div>
@@ -218,14 +218,14 @@
             <div>
               <div class="flex items-center gap-1.5">
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">CASH SA KAHON</span>
-                <span id="tuboBadge" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">+₱0.00 Tubo</span>
+                <span id="tuboBadge" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">+â‚±0.00 Tubo</span>
               </div>
               <div id="financialHiddenBanner" class="flex items-center gap-2 mt-0.5">
-                <span class="font-display font-black text-2xl text-slate-800 tracking-tight">₱••••••</span>
+                <span class="font-display font-black text-2xl text-slate-800 tracking-tight">â‚±â€¢â€¢â€¢â€¢â€¢â€¢</span>
                 <button onclick="promptAdminPin()" class="text-xs text-peddlr-600 font-bold underline ml-1">Ipakita</button>
               </div>
               <div id="financialAdminContainer" class="hidden">
-                <span class="font-display font-black text-2xl text-slate-900 tracking-tight" id="statPeddlrCoins">₱1,000.00</span>
+                <span class="font-display font-black text-2xl text-slate-900 tracking-tight" id="statPeddlrCoins">â‚±1,000.00</span>
                 <button onclick="lockAdminView()" class="text-[10px] text-slate-400 font-semibold ml-2 underline">Itago</button>
               </div>
             </div>
@@ -237,11 +237,11 @@
         <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
           <div class="bg-slate-50/80 rounded-2xl p-2.5 border border-slate-100">
             <span class="text-[10px] text-slate-400 font-semibold block">Panimulang Float:</span>
-            <strong class="text-slate-800 font-bold text-sm" id="statStartingFloat">₱1,000.00</strong>
+            <strong class="text-slate-800 font-bold text-sm" id="statStartingFloat">â‚±1,000.00</strong>
           </div>
           <div class="bg-pink-50/50 rounded-2xl p-2.5 border border-pink-100/60">
             <span class="text-[10px] text-peddlr-600 font-semibold block">Net Daloy sa Kahon:</span>
-            <strong class="font-bold text-emerald-600 text-sm" id="statNetCashFlow">+₱0.00</strong>
+            <strong class="font-bold text-emerald-600 text-sm" id="statNetCashFlow">+â‚±0.00</strong>
           </div>
         </div>
       </div>
@@ -360,9 +360,9 @@
         <select id="posSortDropdown" onchange="changeSortMode(this.value)" class="flex-1 py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none">
           <option value="default">Default (ID)</option>
           <option value="name-asc">Pangalan A-Z</option>
-          <option value="price-asc">Presyo: Mababa → Mataas</option>
-          <option value="price-desc">Presyo: Mataas → Mababa</option>
-          <option value="stock-asc">Stock: Mababa → Mataas</option>
+          <option value="price-asc">Presyo: Mababa â†’ Mataas</option>
+          <option value="price-desc">Presyo: Mataas â†’ Mababa</option>
+          <option value="stock-asc">Stock: Mababa â†’ Mataas</option>
         </select>
       </div>
     </header>
@@ -382,7 +382,7 @@
     <div class="pos-checkout-bar fixed bottom-14 left-0 right-0 max-w-md mx-auto p-3 z-40 bg-white border-t border-slate-200 shadow-2xl">
       <div class="flex items-center justify-between mb-2 px-1">
         <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Amount Due:</span>
-        <span id="posTotalAmountDue" class="font-display font-extrabold text-2xl text-peddlr-700">₱0.00</span>
+        <span id="posTotalAmountDue" class="font-display font-extrabold text-2xl text-peddlr-700">â‚±0.00</span>
       </div>
       <div class="grid grid-cols-2 gap-2">
         <button onclick="openCartDrawer()" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition">
@@ -469,6 +469,28 @@
     </div>
   </div>
 
+  <div id="paymentsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closePaymentsModal()" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="modal-panel relative bg-white w-full max-w-md rounded-3xl p-4 shadow-2xl space-y-3 z-10 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><i data-lucide="clipboard-check" class="w-5 h-5"></i></div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm">Mga Bayad sa Utang</h3>
+            <p class="text-[10px] text-slate-400">Mga koleksyon mula sa mga suki (Payments Received)</p>
+          </div>
+        </div>
+        <button onclick="closePaymentsModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="flex items-center justify-between bg-indigo-50/60 rounded-2xl px-3 py-2 border border-indigo-100">
+        <span class="text-[11px] font-bold text-indigo-700 uppercase tracking-wide">Kabuuang Natanggap</span>
+        <span class="font-display font-extrabold text-lg text-indigo-900" id="paymentsTotal">₱0.00</span>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-2 no-scrollbar" id="paymentsListContainer"></div>
+    </div>
+  </div>
   <!-- ==================== APP LOCK SCREEN (startup PIN gate) ==================== -->
   <!-- Covers the whole app until the Admin PIN is verified. Rendered above
        every other layer (z-[90]) and blocks the UI entirely, so no store
@@ -494,7 +516,7 @@
 
         <div>
           <label for="appLockPin" class="block text-[11px] font-bold text-slate-500 mb-1">Admin PIN</label>
-          <input id="appLockPin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••"
+          <input id="appLockPin" type="password" inputmode="numeric" autocomplete="off" placeholder="â€¢â€¢â€¢â€¢"
                  onkeydown="if(event.key==='Enter'){event.preventDefault();submitAppLockPin();}"
                  class="w-full p-3 border border-slate-200 rounded-xl text-center text-lg tracking-[0.5em] font-bold outline-none focus:border-peddlr-400 focus:ring-2 focus:ring-peddlr-100">
           <p id="appLockError" class="hidden text-[11px] font-bold text-rose-600 mt-1.5 text-center"></p>
@@ -506,7 +528,7 @@
         </button>
 
         <p class="text-[10px] text-slate-400 text-center leading-relaxed">
-          Default PIN: <span class="font-bold text-slate-500">1234</span> — palitan sa Tindahan → Store Profile.
+          Default PIN: <span class="font-bold text-slate-500">1234</span> â€” palitan sa Tindahan â†’ Store Profile.
         </p>
       </div>
     </div>
@@ -563,7 +585,7 @@
             <option value="Inflow">Cash Inflow (+)</option>
             <option value="Outflow">Cash Outflow (-)</option>
           </select>
-          <input type="number" id="cashEntryAmount" placeholder="Halaga (₱)" class="p-2 border border-slate-200 rounded-xl text-xs outline-none">
+          <input type="number" id="cashEntryAmount" placeholder="Halaga (â‚±)" class="p-2 border border-slate-200 rounded-xl text-xs outline-none">
         </div>
         <input type="text" id="cashEntryNote" placeholder="Paliwanag / Description" class="w-full p-2 border border-slate-200 rounded-xl text-xs outline-none">
         <button onclick="saveCashLedgerEntry()" class="w-full py-2 bg-peddlr-600 text-white font-bold text-xs rounded-xl hover:bg-peddlr-700">I-save sa Ledger</button>
@@ -590,7 +612,7 @@
           <option value="Plastik">Plastik & Supplies</option>
           <option value="Iba pa">Iba pa (Others)</option>
         </select>
-        <input type="number" id="expenseAmount" placeholder="Halaga (₱)" class="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none">
+        <input type="number" id="expenseAmount" placeholder="Halaga (â‚±)" class="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none">
         <input type="text" id="expenseDesc" placeholder="Keterangan / Notes" class="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none">
         <button onclick="submitExpense()" class="w-full py-2.5 bg-amber-600 text-white font-bold text-xs rounded-xl hover:bg-amber-700">Record Expense</button>
       </div>
@@ -613,8 +635,8 @@
           <option value="Cash-Out">GCash Cash-Out</option>
           <option value="Buy-Load">Buy Load</option>
         </select>
-        <input type="number" id="gcashAmount" placeholder="Halaga (₱)" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
-        <input type="number" id="gcashFee" placeholder="Convenience / Service Fee (₱)" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <input type="number" id="gcashAmount" placeholder="Halaga (â‚±)" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
+        <input type="number" id="gcashFee" placeholder="Convenience / Service Fee (â‚±)" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
         <input type="text" id="gcashRef" placeholder="Reference Number" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
         <input type="text" id="gcashCustomer" placeholder="Customer Name / Mobile No." class="w-full p-2.5 border border-slate-200 rounded-xl outline-none">
         <button onclick="submitGCashTxn()" class="w-full py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700">Record Transaction</button>
@@ -633,7 +655,7 @@
         <button onclick="closeModal('floatModal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       <div class="space-y-2 text-xs">
-        <label class="block text-slate-500 font-semibold">Ipasok ang bagong Panimulang Float (₱):</label>
+        <label class="block text-slate-500 font-semibold">Ipasok ang bagong Panimulang Float (â‚±):</label>
         <input type="number" id="inputFloatValue" placeholder="1000.00" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm font-bold outline-none">
         <button onclick="submitNewFloat()" class="w-full py-2.5 bg-peddlr-600 text-white font-bold rounded-xl hover:bg-peddlr-700">I-save ang Float</button>
       </div>
@@ -711,8 +733,8 @@
           <input type="text" id="invName" placeholder="Pangalan ng Product" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
         </div>
         <div class="grid grid-cols-3 gap-1.5">
-          <input type="number" id="invCost" placeholder="Cost (₱)" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
-          <input type="number" id="invPrice" placeholder="Selling (₱)" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
+          <input type="number" id="invCost" placeholder="Cost (â‚±)" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
+          <input type="number" id="invPrice" placeholder="Selling (â‚±)" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
           <input type="number" id="invQty" placeholder="Dami (Qty)" class="p-2 border border-slate-200 rounded-xl bg-white outline-none">
         </div>
         <button onclick="submitNewProductRestock()" class="w-full py-2 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700">I-add sa Inventory</button>
@@ -766,35 +788,35 @@
       <div class="grid grid-cols-2 gap-2 text-xs">
         <div class="p-3 bg-teal-50 rounded-2xl border border-teal-100">
           <span class="text-slate-500 block text-[10px] font-bold uppercase">Kabuuang Benta</span>
-          <span class="font-display font-bold text-base text-teal-800" id="repTotalSales">₱0.00</span>
+          <span class="font-display font-bold text-base text-teal-800" id="repTotalSales">â‚±0.00</span>
         </div>
         <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
           <span class="text-slate-500 block text-[10px] font-bold uppercase">Tubo (Presyo - Gastos)</span>
-          <span class="font-display font-bold text-base text-emerald-800" id="repGrossProfit">₱0.00</span>
+          <span class="font-display font-bold text-base text-emerald-800" id="repGrossProfit">â‚±0.00</span>
         </div>
         <div class="p-3 bg-blue-50 rounded-2xl border border-blue-100">
           <span class="text-slate-500 block text-[10px] font-bold uppercase">Cash na Benta</span>
-          <span class="font-display font-bold text-base text-blue-800" id="repCashSales">₱0.00</span>
+          <span class="font-display font-bold text-base text-blue-800" id="repCashSales">â‚±0.00</span>
         </div>
         <div class="p-3 bg-rose-50 rounded-2xl border border-rose-100">
           <span class="text-slate-500 block text-[10px] font-bold uppercase">Utang na Benta</span>
-          <span class="font-display font-bold text-base text-rose-800" id="repUtangSales">₱0.00</span>
+          <span class="font-display font-bold text-base text-rose-800" id="repUtangSales">â‚±0.00</span>
         </div>
         <div class="p-3 bg-amber-50 rounded-2xl border border-amber-100">
           <span class="text-slate-500 block text-[10px] font-bold uppercase">Gastos (Range)</span>
-          <span class="font-display font-bold text-base text-amber-800" id="repExpenses">₱0.00</span>
+          <span class="font-display font-bold text-base text-amber-800" id="repExpenses">â‚±0.00</span>
         </div>
         <div class="p-3 bg-indigo-50 rounded-2xl border border-indigo-100">
           <span class="text-slate-500 block text-[10px] font-bold uppercase">Utang na Sekwalko</span>
-          <span class="font-display font-bold text-base text-indigo-800" id="repUtangCollected">₱0.00</span>
+          <span class="font-display font-bold text-base text-indigo-800" id="repUtangCollected">â‚±0.00</span>
         </div>
         <div class="p-3 bg-rose-50 rounded-2xl border border-rose-200">
           <span class="text-slate-500 block text-[10px] font-bold uppercase">Bukas na Utang</span>
-          <span class="font-display font-bold text-base text-rose-800" id="repUtangOutstanding">₱0.00</span>
+          <span class="font-display font-bold text-base text-rose-800" id="repUtangOutstanding">â‚±0.00</span>
         </div>
         <div class="p-3 bg-sky-50 rounded-2xl border border-sky-100">
           <span class="text-slate-500 block text-[10px] font-bold uppercase">GCash Net (Range)</span>
-          <span class="font-display font-bold text-base text-sky-800" id="repGcashNet">₱0.00</span>
+          <span class="font-display font-bold text-base text-sky-800" id="repGcashNet">â‚±0.00</span>
         </div>
       </div>
 
@@ -808,10 +830,10 @@
       <div class="space-y-1.5 pt-1">
         <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block flex items-center gap-1.5"><i data-lucide="circuit-board" class="w-3.5 h-3.5"></i> DSA sa Aksyon (Live Trace)</span>
         <div class="bg-slate-900 text-emerald-400 rounded-2xl p-2.5 text-[10px] font-mono space-y-1">
-          <div><span class="text-slate-500">#</span> CustomHashTable <span class="text-slate-400">→</span> i-group ang Sales_Items sa sale_id <span class="text-slate-500">(O(n))</span></div>
-          <div><span class="text-slate-500">#</span> CustomHashTable <span class="text-slate-400">→</span> product_id → cost/price lookup <span class="text-slate-500">(O(p))</span></div>
-          <div><span class="text-slate-500">#</span> MergeSort <span class="text-slate-400">→</span> araw-araw na breakdown (bago → luma) <span class="text-slate-500">(O(d log d))</span></div>
-          <div><span class="text-slate-500">#</span> CustomMinHeap <span class="text-slate-400">→</span> pinakamarami nang gastos sa itaas <span class="text-slate-500">(O(k log k))</span></div>
+          <div><span class="text-slate-500">#</span> CustomHashTable <span class="text-slate-400">â†’</span> i-group ang Sales_Items sa sale_id <span class="text-slate-500">(O(n))</span></div>
+          <div><span class="text-slate-500">#</span> CustomHashTable <span class="text-slate-400">â†’</span> product_id â†’ cost/price lookup <span class="text-slate-500">(O(p))</span></div>
+          <div><span class="text-slate-500">#</span> MergeSort <span class="text-slate-400">â†’</span> araw-araw na breakdown (bago â†’ luma) <span class="text-slate-500">(O(d log d))</span></div>
+          <div><span class="text-slate-500">#</span> CustomMinHeap <span class="text-slate-400">â†’</span> pinakamarami nang gastos sa itaas <span class="text-slate-500">(O(k log k))</span></div>
         </div>
         <div id="repTopExpenses" class="space-y-1"></div>
       </div>
@@ -834,7 +856,7 @@
       <div class="p-4 bg-slate-50 border-t border-slate-100 space-y-2.5">
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold text-slate-500">Kabuuang Halaga:</span>
-          <span id="cartDrawerTotal" class="font-display font-extrabold text-xl text-slate-900">₱0.00</span>
+          <span id="cartDrawerTotal" class="font-display font-extrabold text-xl text-slate-900">â‚±0.00</span>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <button onclick="initiateCheckout('Cash')" class="py-3 peddlr-pink-gradient hover:opacity-95 text-white rounded-2xl text-xs font-bold shadow-md transition">Cash Checkout</button>
@@ -990,6 +1012,7 @@
       sales: [],
       salesItems: [],             // line items - needed for real profit (tubo)
       utang: [],
+      utangPayments: [],          // Utang collections - used by Payments modal
       cashEntries: [],
       expenses: [],
       cart: {},
@@ -1014,7 +1037,7 @@
      * Security model: the app is unusable until the Admin PIN is verified,
      * so no store data renders before authentication. `appState.isUnlocked`
      * tracks the session; once true the user stays unlocked until the tab
-     * is closed (kept in memory only — never persisted, by design).
+     * is closed (kept in memory only â€” never persisted, by design).
      * ================================================================== */
     function showAppLockScreen() {
       const lock = document.getElementById('appLockScreen');
@@ -1109,7 +1132,51 @@
     function openUtangTabFromHome() { showScreen('screen-utang'); setActiveNav('navUtang'); renderUtangList(); }
     function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
     function openCashLedgerModal() { document.getElementById('cashLedgerModal').classList.remove('hidden'); renderCashLedgerLogs(); }
-    function openPaymentsModal() { openCashLedgerModal(); }
+
+    /** Payments = Utang collections/receipts, separate from Cash Ledger. */
+    function openPaymentsModal() {
+      document.getElementById('paymentsModal').classList.remove('hidden');
+      renderPaymentsList();
+    }
+    function closePaymentsModal() { document.getElementById('paymentsModal').classList.add('hidden'); }
+
+    function renderPaymentsList() {
+      const container = document.getElementById('paymentsListContainer');
+      if (!container) return;
+      const payments = (appState.utangPayments || []).slice().sort((a, b) => {
+        const ta = new Date(a.timestamp).getTime();
+        const tb = new Date(b.timestamp).getTime();
+        return tb - ta;
+      });
+      if (payments.length === 0) {
+        container.innerHTML = '<div class="text-center py-6 text-slate-400 text-xs">Walang bayad sa utang na naitala.</div>';
+        document.getElementById('paymentsTotal').innerText = 'â‚±0.00';
+        return;
+      }
+      let total = 0;
+      container.innerHTML = payments.map(p => {
+        const amt = Number(p.amount_paid) || 0;
+        total += amt;
+        let ts = p.timestamp || '';
+        try {
+          if (ts) ts = new Date(ts).toLocaleString('en-PH', { dateStyle: 'short', timeStyle: 'short' });
+        } catch (e) { /* keep raw */ }
+        return `
+          <div class="p-3 bg-white rounded-2xl border border-indigo-100/70 flex items-center justify-between shadow-xs">
+            <div>
+              <span class="text-[10px] font-bold text-indigo-600 font-mono block">${esc(p.payment_id || '-')}</span>
+              <h4 class="font-bold text-slate-800 text-xs">${esc(p.customer_name || p.utang_id || 'Suki')}</h4>
+              <span class="text-[10px] text-slate-400 block">${esc(p.note || 'Utang Payment')} â€¢ ${esc(ts)}</span>
+            </div>
+            <div class="text-right">
+              <span class="font-extrabold text-emerald-700 text-sm block">+â‚±${amt.toFixed(2)}</span>
+              <span class="text-[10px] text-slate-400 block">Utang: ${esc(p.utang_id || '-')}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('paymentsTotal').innerText = 'â‚±' + total.toFixed(2);
+    }
     function openExpensesModal() { document.getElementById('expensesModal').classList.remove('hidden'); }
     function openGCashModal() { document.getElementById('gcashModal').classList.remove('hidden'); }
     function openMagFloatModal() {
@@ -1194,6 +1261,7 @@
         appState.sales = res.data.sales || [];
         appState.salesItems = res.data.salesItems || [];
         appState.utang = res.data.utang || [];
+        appState.utangPayments = res.data.utangPayments || [];
         appState.cashEntries = res.data.cashEntries || [];
         appState.expenses = res.data.expenses || [];
         appState.startingFloat = res.data.startingFloat || 1000.00;
@@ -1300,7 +1368,7 @@
         Number(p.stock_qty) <= Number(p.reorder_level || 5));
 
       if (lowStock.length === 0) {
-        container.innerHTML = '<div class="text-[11px] text-emerald-700 font-semibold text-center py-1">✓ Lahat ay sapat ang stock.</div>';
+        container.innerHTML = '<div class="text-[11px] text-emerald-700 font-semibold text-center py-1">âœ“ Lahat ay sapat ang stock.</div>';
         return;
       }
 
@@ -1325,7 +1393,7 @@
             <span class="font-black text-amber-600 w-4 text-center">${i + 1}</span>
             <span class="font-semibold text-slate-700 truncate">${esc(r.name)}</span>
           </div>
-          <span class="font-bold text-rose-600 shrink-0 ml-1">${r.stock}/${r.reorder} → ${r.suggested}</span>
+          <span class="font-bold text-rose-600 shrink-0 ml-1">${r.stock}/${r.reorder} â†’ ${r.suggested}</span>
         </div>
       `).join('');
     }
@@ -1509,7 +1577,7 @@
      * ADMIN PIN + FINANCIAL SUMMARY
      * ------------------------------------------------------------------
      * The PIN gate lives at startup (see APP LOCK SCREEN). Once verified,
-     * revealing/hiding the money amounts is a free local toggle — no PIN
+     * revealing/hiding the money amounts is a free local toggle â€” no PIN
      * is asked again, which is what a cashier needs during a busy shift.
      * `promptAdminPin` is kept as an alias so the existing markup and any
      * older call sites keep working.
@@ -1534,9 +1602,9 @@
       document.getElementById('financialHiddenBanner').classList.remove('hidden');
       document.getElementById('financialAdminContainer').classList.add('hidden');
       // "Itago" must hide every money figure, not just the main one.
-      document.getElementById('statStartingFloat').innerText = '₱••••';
-      document.getElementById('statNetCashFlow').innerText = '₱••••';
-      document.getElementById('tuboBadge').innerText = '₱•••• Tubo';
+      document.getElementById('statStartingFloat').innerText = 'â‚±â€¢â€¢â€¢â€¢';
+      document.getElementById('statNetCashFlow').innerText = 'â‚±â€¢â€¢â€¢â€¢';
+      document.getElementById('tuboBadge').innerText = 'â‚±â€¢â€¢â€¢â€¢ Tubo';
     }
 
     /** 1234.5 -> "1,234.50" */
@@ -1547,10 +1615,10 @@
       });
     }
 
-    /** Peso formatting with the sign in front: -₱5.00, not ₱-5.00. */
+    /** Peso formatting with the sign in front: -â‚±5.00, not â‚±-5.00. */
     function fmtPeso(value) {
       const n = Number(value) || 0;
-      return (n < 0 ? '-₱' : '₱') + fmtNumber(Math.abs(n));
+      return (n < 0 ? '-â‚±' : 'â‚±') + fmtNumber(Math.abs(n));
     }
 
     /**
@@ -1617,15 +1685,15 @@
       document.getElementById('statPeddlrCoins').innerText = fmtPeso(netCash);
       document.getElementById('statStartingFloat').innerText = fmtPeso(appState.startingFloat);
       document.getElementById('statNetCashFlow').innerText =
-        (netCashFlow >= 0 ? '+' : '-') + '₱' + fmtNumber(Math.abs(netCashFlow));
+        (netCashFlow >= 0 ? '+' : '-') + 'â‚±' + fmtNumber(Math.abs(netCashFlow));
 
       // Real gross profit = (selling price - cost price) x qty sold.
       const badge = document.getElementById('tuboBadge');
       if (totals.saleCount > 0 && totals.costedLines === 0) {
-        badge.innerText = 'Tubo: —';
+        badge.innerText = 'Tubo: â€”';
         badge.title = 'Walang line-item na data para makwenta ang tubo.';
       } else {
-        badge.innerText = (totals.profit < 0 ? '-₱' : '+₱') + fmtNumber(Math.abs(totals.profit)) + ' Tubo';
+        badge.innerText = (totals.profit < 0 ? '-â‚±' : '+â‚±') + fmtNumber(Math.abs(totals.profit)) + ' Tubo';
         badge.title = 'Kita mula sa ' + totals.saleCount + ' benta (presyo ng benta minus puhunan).';
       }
     }
@@ -1666,7 +1734,7 @@
             <span class="text-[10px] text-slate-400">${esc(c.type)}</span>
           </div>
           <span class="font-extrabold ${c.type === 'Inflow' ? 'text-emerald-600' : 'text-rose-600'}">
-            ${c.type === 'Inflow' ? '+' : '-'}₱${Number(c.amount).toFixed(2)}
+            ${c.type === 'Inflow' ? '+' : '-'}â‚±${Number(c.amount).toFixed(2)}
           </span>
         </div>
       `).join('');
@@ -1686,7 +1754,7 @@
             <span class="text-[10px] text-slate-400 block">${esc(u.phone_number) || 'Walang Phone'}</span>
           </div>
           <div class="text-right">
-            <span class="font-extrabold text-rose-600 text-xs block">₱${Number(u.balance).toFixed(2)}</span>
+            <span class="font-extrabold text-rose-600 text-xs block">â‚±${Number(u.balance).toFixed(2)}</span>
             ${Number(u.balance) > 0 ? `<button onclick="payUtangPrompt(${esc(JSON.stringify(String(u.utang_id)))}, ${esc(JSON.stringify(String(u.customer_name)))})" class="text-[10px] font-bold text-peddlr-600 underline">Magbayad</button>` : '<span class="text-[10px] font-bold text-emerald-600">Bayad na</span>'}
           </div>
         </div>
@@ -1698,7 +1766,7 @@
         title: 'Bayad sa Utang',
         icon: 'hand-coins',
         iconClass: 'bg-emerald-50 text-emerald-600',
-        inputLabel: 'Halaga (₱)',
+        inputLabel: 'Halaga (â‚±)',
         inputType: 'number',
         placeholder: '0.00',
         okText: 'I-record'
@@ -1787,7 +1855,7 @@
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(res => {
           if (res && res.success) {
-            uiAlert('Nai-save ang remittance!\n\nExpected: ₱' + res.expectedCash.toFixed(2) + '\nActual: ₱' + res.actual.toFixed(2) + '\nDiscrepancy: ₱' + res.discrepancy.toFixed(2), {
+            uiAlert('Nai-save ang remittance!\n\nExpected: â‚±' + res.expectedCash.toFixed(2) + '\nActual: â‚±' + res.actual.toFixed(2) + '\nDiscrepancy: â‚±' + res.discrepancy.toFixed(2), {
               title: 'Remittance Saved',
               icon: 'lock',
               iconClass: 'bg-emerald-50 text-emerald-600'
@@ -1858,7 +1926,7 @@
           .withSuccessHandler(res => {
             if (res && res.success) {
               statusEl.className = 'text-[11px] font-bold text-center py-1 rounded-xl bg-emerald-100 text-emerald-700';
-              statusEl.textContent = '✓ Araw-araw na 7:00 AM alerts ON (' + email + ')';
+              statusEl.textContent = 'âœ“ Araw-araw na 7:00 AM alerts ON (' + email + ')';
             } else {
               statusEl.className = 'text-[11px] font-bold text-center py-1 rounded-xl bg-rose-100 text-rose-700';
               statusEl.textContent = 'Error: ' + (res && res.error);
@@ -1955,12 +2023,12 @@
               <span class="text-[9px] font-bold text-slate-400 font-mono block">${esc(p.product_id)}</span>
               <h4 class="font-bold text-slate-800 text-xs truncate">${esc(p.name)}</h4>
               <div class="flex items-center gap-2 mt-0.5">
-                <span class="font-extrabold text-peddlr-700 text-xs">₱${Number(p.selling_price).toFixed(2)}</span>
+                <span class="font-extrabold text-peddlr-700 text-xs">â‚±${Number(p.selling_price).toFixed(2)}</span>
                 <span class="text-[10px] ${Number(p.stock_qty) <= Number(p.reorder_level || 5) ? 'text-rose-600 font-bold' : 'text-slate-400'}">Stock: ${p.stock_qty}</span>
               </div>
             </div>
             <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl shrink-0">
-              <button onclick="updateCartQty(${esc(JSON.stringify(String(p.product_id)))}, -1)" class="w-7 h-7 rounded-lg bg-white text-slate-700 flex items-center justify-center font-extrabold text-sm shadow-xs hover:bg-slate-200 active:scale-95 transition">−</button>
+              <button onclick="updateCartQty(${esc(JSON.stringify(String(p.product_id)))}, -1)" class="w-7 h-7 rounded-lg bg-white text-slate-700 flex items-center justify-center font-extrabold text-sm shadow-xs hover:bg-slate-200 active:scale-95 transition">âˆ’</button>
               <span class="w-6 text-center font-bold text-xs text-slate-800">${qtyInCart}</span>
               <button onclick="updateCartQty(${esc(JSON.stringify(String(p.product_id)))}, 1)" class="w-7 h-7 rounded-lg peddlr-pink-gradient text-white flex items-center justify-center font-extrabold text-sm shadow-xs hover:opacity-90 active:scale-95 transition">+</button>
             </div>
@@ -1999,8 +2067,8 @@
         total += item.unitPrice * item.qty;
         totalCount += item.qty;
       });
-      document.getElementById('posTotalAmountDue').innerText = '₱' + total.toFixed(2);
-      document.getElementById('cartDrawerTotal').innerText = '₱' + total.toFixed(2);
+      document.getElementById('posTotalAmountDue').innerText = 'â‚±' + total.toFixed(2);
+      document.getElementById('cartDrawerTotal').innerText = 'â‚±' + total.toFixed(2);
       document.getElementById('posOrdersBadge').innerText = totalCount;
     }
 
@@ -2028,7 +2096,7 @@
             <span class="text-[10px] text-slate-400 block">${esc(p.category) || 'General'}</span>
           </div>
           <div class="text-right">
-            <span class="font-extrabold text-slate-900 text-xs block">₱${Number(p.selling_price).toFixed(2)}</span>
+            <span class="font-extrabold text-slate-900 text-xs block">â‚±${Number(p.selling_price).toFixed(2)}</span>
             <span class="text-[10px] font-semibold ${Number(p.stock_qty) <= Number(p.reorder_level || 5) ? 'text-rose-600' : 'text-slate-500'}">Stock: ${p.stock_qty}</span>
           </div>
         </div>
@@ -2056,7 +2124,7 @@
 
       const btn = document.getElementById('generateReportBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="animate-spin">⏳</span><span>Kinakalkula...</span>';
+      btn.innerHTML = '<span class="animate-spin">â³</span><span>Kinakalkula...</span>';
 
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
@@ -2085,7 +2153,7 @@
     }
 
     function renderReportResults(r) {
-      const peso = v => '₱' + (Number(v) || 0).toFixed(2);
+      const peso = v => 'â‚±' + (Number(v) || 0).toFixed(2);
       document.getElementById('repTotalSales').innerText = peso(r.totalSales);
       document.getElementById('repGrossProfit').innerText = peso(r.totalProfit);
       document.getElementById('repCashSales').innerText = peso(r.cashSales);
@@ -2095,8 +2163,8 @@
       document.getElementById('repUtangOutstanding').innerText = peso(r.utangOutstanding);
       document.getElementById('repGcashNet').innerText = peso((r.gcashIn || 0) - (r.gcashOut || 0));
       document.getElementById('repMeta').innerText =
-        (r.transactionCount || 0) + ' transactions · ' +
-        (r.startDate || '') + ' → ' + (r.endDate || '');
+        (r.transactionCount || 0) + ' transactions Â· ' +
+        (r.startDate || '') + ' â†’ ' + (r.endDate || '');
 
       const daily = r.dailyBreakdown || [];
       const container = document.getElementById('repDailyBreakdown');
@@ -2140,7 +2208,7 @@
       const summary = document.getElementById('dsaTestSummary');
       const results = document.getElementById('dsaTestResults');
       btn.disabled = true;
-      btn.innerHTML = '<span class="animate-spin">⏳</span><span>Nagtetest...</span>';
+      btn.innerHTML = '<span class="animate-spin">â³</span><span>Nagtetest...</span>';
 
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
@@ -2157,7 +2225,7 @@
           .withFailureHandler(() => {
             btn.disabled = false;
             btn.innerHTML = '<span>Run DSA Tests</span>';
-            uiToast('Nabigo ang test run — tingnan ang Apps Script logs.', 'error');
+            uiToast('Nabigo ang test run â€” tingnan ang Apps Script logs.', 'error');
           })
           .runDsaUnitTests();
       } else {
@@ -2174,7 +2242,7 @@
       summary.classList.remove('hidden');
       summary.className = 'text-xs font-bold text-center py-1.5 rounded-xl ' +
         (allPass ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700');
-      summary.textContent = (allPass ? '✅ ALL PASS: ' : '⚠ RESULTS: ') + res.passed + '/' + res.total + ' tests passed';
+      summary.textContent = (allPass ? 'âœ… ALL PASS: ' : 'âš  RESULTS: ') + res.passed + '/' + res.total + ' tests passed';
 
       results.innerHTML = res.results.map(t => `
         <div class="flex items-center justify-between text-[10px] bg-slate-50 rounded-lg px-2 py-1 border border-slate-100">
@@ -2242,9 +2310,9 @@
         <div class="p-2.5 bg-slate-50 rounded-xl flex items-center justify-between">
           <div>
             <h4 class="font-bold text-slate-800 text-xs">${esc(i.name)}</h4>
-            <span class="text-[10px] text-slate-500">₱${i.unitPrice.toFixed(2)} x ${i.qty}</span>
+            <span class="text-[10px] text-slate-500">â‚±${i.unitPrice.toFixed(2)} x ${i.qty}</span>
           </div>
-          <span class="font-bold text-xs text-slate-800">₱${(i.unitPrice * i.qty).toFixed(2)}</span>
+          <span class="font-bold text-xs text-slate-800">â‚±${(i.unitPrice * i.qty).toFixed(2)}</span>
         </div>
       `).join('');
     }
@@ -2332,11 +2400,11 @@
       });
       if (name === null || !String(name).trim()) return;
 
-      const amount = await uiPrompt('Halaga ng Utang (₱):', {
+      const amount = await uiPrompt('Halaga ng Utang (â‚±):', {
         title: 'Bagong Utang',
         icon: 'coins',
         iconClass: 'bg-amber-50 text-amber-600',
-        inputLabel: 'Halaga (₱)',
+        inputLabel: 'Halaga (â‚±)',
         inputType: 'number',
         placeholder: '0.00',
         okText: 'Susunod'
