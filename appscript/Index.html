@@ -978,6 +978,8 @@
       products: [],
       sales: [],
       utang: [],
+      utangPayments: [],
+      purchases: [],
       cashEntries: [],
       expenses: [],
       cart: {},
@@ -1098,7 +1100,30 @@
     function openUtangTabFromHome() { showScreen('screen-utang'); setActiveNav('navUtang'); renderUtangList(); }
     function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
     function openCashLedgerModal() { document.getElementById('cashLedgerModal').classList.remove('hidden'); renderCashLedgerLogs(); }
-    function openPaymentsModal() { openCashLedgerModal(); }
+    function openPaymentsModal() { document.getElementById('paymentsModal').classList.remove('hidden'); renderPaymentsReceived(); }
+    function closePaymentsModal() { document.getElementById('paymentsModal').classList.add('hidden'); }
+    function renderPaymentsReceived() {
+      const container = document.getElementById('paymentsReceivedList');
+      if (!container) return;
+      const payments = appState.utangPayments || [];
+      if (payments.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Walang natanggap na bayad sa utang.</div>';
+        if (document.getElementById('paymentsReceivedTotal')) document.getElementById('paymentsReceivedTotal').innerText = '₱0.00';
+        return;
+      }
+      const sorted = [...payments].sort((a,b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+      let total = 0;
+      container.innerHTML = sorted.slice(0, 50).map(p => {
+        const amt = Number(p.amount_paid) || 0;
+        total += amt;
+        const date = p.timestamp ? new Date(p.timestamp).toLocaleDateString('en-PH') : '';
+        return `<div class="flex items-center justify-between p-2.5 bg-white rounded-xl border border-indigo-100">
+          <div><div class="text-xs font-bold text-slate-800">${esc(p.customer_name || 'Suki')}</div><div class="text-[10px] text-slate-400">${esc(p.utang_id || '')} • ${esc(date)}</div></div>
+          <div class="text-sm font-bold text-emerald-600">+₱${amt.toFixed(2)}</div>
+        </div>`;
+      }).join('');
+      if (document.getElementById('paymentsReceivedTotal')) document.getElementById('paymentsReceivedTotal').innerText = '₱' + total.toFixed(2);
+    }
     function openExpensesModal() { document.getElementById('expensesModal').classList.remove('hidden'); }
     function openGCashModal() { document.getElementById('gcashModal').classList.remove('hidden'); }
     function openMagFloatModal() {
@@ -1118,7 +1143,33 @@
         iconClass: 'bg-peddlr-50 text-peddlr-600'
       });
     }
-    function openPurchasesModal() { openInventoryModal(); }
+    function openPurchasesModal() {
+      document.getElementById('purchasesModal').classList.remove('hidden');
+      renderPurchasesHistory();
+    }
+    function closePurchasesModal() { document.getElementById('purchasesModal').classList.add('hidden'); }
+    function renderPurchasesHistory() {
+      const container = document.getElementById('purchasesListContainer');
+      if (!container) return;
+      const purchases = appState.purchases || [];
+      if (purchases.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Walang history ng purchases.</div>';
+        if (document.getElementById('purchasesTotal')) document.getElementById('purchasesTotal').innerText = '₱0.00';
+        return;
+      }
+      const sorted = [...purchases].sort((a,b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+      let total = 0;
+      container.innerHTML = sorted.slice(0, 50).map(p => {
+        const amt = Number(p.total_cost) || 0;
+        total += amt;
+        const date = p.timestamp ? new Date(p.timestamp).toLocaleDateString('en-PH') : '';
+        return `<div class="flex items-center justify-between p-2.5 bg-white rounded-xl border border-rose-100">
+          <div><div class="text-xs font-bold text-slate-800">${esc(p.product_name || p.product_id || '')}</div><div class="text-[10px] text-slate-400">${p.qty || 0} pcs • ${esc(date)}</div></div>
+          <div class="text-sm font-bold text-rose-600">₱${amt.toFixed(2)}</div>
+        </div>`;
+      }).join('');
+      if (document.getElementById('purchasesTotal')) document.getElementById('purchasesTotal').innerText = '₱' + total.toFixed(2);
+    }
     function showScreen(screenId) {
       document.querySelectorAll('.screen-view').forEach(s => s.classList.add('hidden'));
       document.getElementById(screenId).classList.remove('hidden');
@@ -1182,6 +1233,8 @@
         appState.products = res.data.products || [];
         appState.sales = res.data.sales || [];
         appState.utang = res.data.utang || [];
+        appState.utangPayments = res.data.utangPayments || [];
+        appState.purchases = res.data.purchases || [];
         appState.cashEntries = res.data.cashEntries || [];
         appState.expenses = res.data.expenses || [];
         appState.startingFloat = res.data.startingFloat || 1000.00;
