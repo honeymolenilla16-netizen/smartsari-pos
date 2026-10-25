@@ -977,13 +977,13 @@
     let appState = {
       products: [],
       sales: [],
+      salesItems: [],             // line items - needed for real profit (tubo)
       utang: [],
       cashEntries: [],
       expenses: [],
       cart: {},
       selectedCategory: 'All',
       searchQuery: '',
-      isAdminView: false,
       startingFloat: 1000.00,
       sortMode: 'default',        // NEW: sort dropdown state
       nameIndex: [],              // NEW: name-sorted product index (Binary Search)
@@ -1181,6 +1181,7 @@
       if (res && res.success) {
         appState.products = res.data.products || [];
         appState.sales = res.data.sales || [];
+        appState.salesItems = res.data.salesItems || [];
         appState.utang = res.data.utang || [];
         appState.cashEntries = res.data.cashEntries || [];
         appState.expenses = res.data.expenses || [];
@@ -1514,21 +1515,108 @@
       appState.isAdminView = true;
       document.getElementById('financialHiddenBanner').classList.add('hidden');
       document.getElementById('financialAdminContainer').classList.remove('hidden');
+      // Restore the figures that lockAdminView() masked.
+      updateFinancialSummary();
     }
     function lockAdminView() {
       appState.isAdminView = false;
       document.getElementById('financialHiddenBanner').classList.remove('hidden');
       document.getElementById('financialAdminContainer').classList.add('hidden');
+      // "Itago" must hide every money figure, not just the main one.
+      document.getElementById('statStartingFloat').innerText = '₱••••';
+      document.getElementById('statNetCashFlow').innerText = '₱••••';
+      document.getElementById('tuboBadge').innerText = '₱•••• Tubo';
     }
-    function updateFinancialSummary() {
-      const totalSales = appState.sales.reduce((acc, s) => acc + (Number(s.total_amount) || 0), 0);
-      const cashInflows = appState.cashEntries.reduce((acc, c) => acc + (c.type === 'Inflow' ? Number(c.amount || 0) : -Number(c.amount || 0)), 0);
-      const netCash = appState.startingFloat + totalSales + cashInflows;
 
-      document.getElementById('statPeddlrCoins').innerText = '₱' + netCash.toFixed(2);
-      document.getElementById('statStartingFloat').innerText = '₱' + Number(appState.startingFloat).toFixed(2);
-      document.getElementById('statNetCashFlow').innerText = (totalSales + cashInflows >= 0 ? '+' : '') + '₱' + (totalSales + cashInflows).toFixed(2);
-      document.getElementById('tuboBadge').innerText = '+₱' + (totalSales * 0.20).toFixed(2) + ' Tubo';
+    /** 1234.5 -> "1,234.50" */
+    function fmtNumber(value) {
+      return (Number(value) || 0).toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    /** Peso formatting with the sign in front: -₱5.00, not ₱-5.00. */
+    function fmtPeso(value) {
+      const n = Number(value) || 0;
+      return (n < 0 ? '-₱' : '₱') + fmtNumber(Math.abs(n));
+    }
+
+    /**
+     * Totals from COMPLETED sales.
+     * Revenue comes from the sale header, profit comes from the line items
+     * (only they carry qty and unit price). Voided sales are ignored so a
+     * cancelled checkout cannot keep inflating the numbers.
+     *
+     * Time  O(sales + salesItems + products) - one pass each
+     * Space O(sales) completed-sale set + O(products) cost lookup
+     */
+    function computeSaleTotals() {
+      const completed = Object.create(null);
+      let revenue = 0;
+
+      (appState.sales || []).forEach(sale => {
+        const status = String(sale.status || 'Completed').toLowerCase();
+        if (status === 'voided' || status === 'cancelled' || status === 'canceled') return;
+        completed[String(sale.sale_id)] = true;
+        revenue += Number(sale.total_amount) || 0;
+      });
+
+      // product_id -> cost_price, O(1) average lookup per line item.
+      const costOf = Object.create(null);
+      (appState.products || []).forEach(p => {
+        costOf[String(p.product_id)] = Number(p.cost_price) || 0;
+      });
+
+      let profit = 0;
+      let costedLines = 0;
+      (appState.salesItems || []).forEach(item => {
+        if (!completed[String(item.sale_id)]) return;
+        const pid = String(item.product_id);
+        if (pid.indexOf('NON-INV-') === 0) return;   // manual utang entry, no goods
+        if (!(pid in costOf)) return;                 // product deleted: cost unknown
+        const qty = Number(item.qty) || 0;
+        const unit = Number(item.unit_price) || 0;
+        profit += (unit - costOf[pid]) * qty;
+        costedLines++;
+      });
+
+      return {
+        revenue: revenue,
+        profit: profit,
+        costedLines: costedLines,
+        saleCount: Object.keys(completed).length
+      };
+    }
+
+    function updateFinancialSummary() {
+      // Cash on hand is derived from the Cash_Ledger ONLY.
+      // Every real money movement is already there exactly once: cash-sale
+      // inflows, utang payments, GCash service fees, expense outflows.
+      // Adding `sales` on top double-counted cash sales and wrongly counted
+      // Utang sales (which bring in no cash at all).
+      const netCashFlow = (appState.cashEntries || []).reduce((sum, entry) => {
+        const amt = Number(entry.amount) || 0;
+        return String(entry.type).toLowerCase() === 'inflow' ? sum + amt : sum - amt;
+      }, 0);
+      const netCash = (Number(appState.startingFloat) || 0) + netCashFlow;
+
+      const totals = computeSaleTotals();
+
+      document.getElementById('statPeddlrCoins').innerText = fmtPeso(netCash);
+      document.getElementById('statStartingFloat').innerText = fmtPeso(appState.startingFloat);
+      document.getElementById('statNetCashFlow').innerText =
+        (netCashFlow >= 0 ? '+' : '-') + '₱' + fmtNumber(Math.abs(netCashFlow));
+
+      // Real gross profit = (selling price - cost price) x qty sold.
+      const badge = document.getElementById('tuboBadge');
+      if (totals.saleCount > 0 && totals.costedLines === 0) {
+        badge.innerText = 'Tubo: —';
+        badge.title = 'Walang line-item na data para makwenta ang tubo.';
+      } else {
+        badge.innerText = (totals.profit < 0 ? '-₱' : '+₱') + fmtNumber(Math.abs(totals.profit)) + ' Tubo';
+        badge.title = 'Kita mula sa ' + totals.saleCount + ' benta (presyo ng benta minus puhunan).';
+      }
     }
 
     /* ==================================================================
@@ -1636,6 +1724,11 @@
           loadRemoteData();
         }).saveExpense(cat, amt, desc);
       } else {
+        // Demo mode: mirror what the backend does (expense + cash outflow),
+        // otherwise the Home cash figure would ignore the expense.
+        appState.expenses.push({ category: cat, amount: amt, description: desc });
+        appState.cashEntries.push({ type: 'Outflow', amount: amt, note: 'Expense: ' + cat });
+        updateFinancialSummary();
         uiToast('Naitala ang gastos!', 'success');
         closeModal('expensesModal');
       }
