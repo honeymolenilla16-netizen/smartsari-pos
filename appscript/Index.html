@@ -804,6 +804,17 @@
         <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Araw-araw na Benta (Merge Sort)</span>
         <div id="repDailyBreakdown" class="space-y-1 max-h-48 overflow-y-auto no-scrollbar"></div>
       </div>
+
+      <div class="space-y-1.5 pt-1">
+        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block flex items-center gap-1.5"><i data-lucide="circuit-board" class="w-3.5 h-3.5"></i> DSA sa Aksyon (Live Trace)</span>
+        <div class="bg-slate-900 text-emerald-400 rounded-2xl p-2.5 text-[10px] font-mono space-y-1">
+          <div><span class="text-slate-500">#</span> CustomHashTable <span class="text-slate-400">→</span> i-group ang Sales_Items sa sale_id <span class="text-slate-500">(O(n))</span></div>
+          <div><span class="text-slate-500">#</span> CustomHashTable <span class="text-slate-400">→</span> product_id → cost/price lookup <span class="text-slate-500">(O(p))</span></div>
+          <div><span class="text-slate-500">#</span> MergeSort <span class="text-slate-400">→</span> araw-araw na breakdown (bago → luma) <span class="text-slate-500">(O(d log d))</span></div>
+          <div><span class="text-slate-500">#</span> CustomMinHeap <span class="text-slate-400">→</span> pinakamarami nang gastos sa itaas <span class="text-slate-500">(O(k log k))</span></div>
+        </div>
+        <div id="repTopExpenses" class="space-y-1"></div>
+      </div>
     </div>
   </div>
 
@@ -2099,6 +2110,25 @@
             <span class="font-bold text-teal-700">${peso(d.sales)}</span>
           </div>
         `).join('');
+      }
+
+      // Show heap-ranked top expenses if returned by the server.
+      const topExp = document.getElementById('repTopExpenses');
+      if (topExp) {
+        const list = r.topExpenses || [];
+        if (list.length === 0) {
+          topExp.innerHTML = '<div class="text-center py-1.5 text-slate-400 text-[10px]">Walang gastos sa petsang ito.</div>';
+        } else {
+          topExp.innerHTML = list.map((e, i) => `
+            <div class="flex items-center justify-between text-[10px] bg-amber-50/60 rounded-lg px-2.5 py-1.5 border border-amber-100">
+              <div class="min-w-0">
+                <span class="font-bold text-amber-800">#${i+1} ${esc(e.category)}</span>
+                <span class="text-amber-700/70 ml-1 truncate">${esc(e.description)}</span>
+              </div>
+              <span class="font-extrabold text-amber-900">${peso(e.amount)}</span>
+            </div>
+          `).join('');
+        }
       }
     }
 
